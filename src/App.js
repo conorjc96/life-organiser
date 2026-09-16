@@ -1,3 +1,5 @@
+// L.I.F.E Organiser — Life Investment & Focus Engine
+
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
