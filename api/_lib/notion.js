@@ -1,0 +1,35 @@
+const { Client } = require('@notionhq/client');
+
+const notion = new Client({ auth: process.env.NOTION_API_KEY });
+
+// These are Notion *data source* IDs (the 2025-09-03+ API splits each
+// database into one or more data sources; querying rows happens against
+// the data source, not the parent database container).
+const DATA_SOURCES = {
+  areas: '1eb4a5c9-1f3b-4669-803f-a38abfecd6fd',
+  goals: '94b23170-d740-4442-97a2-77257dbca881',
+  activities: '8d0ff343-ee4a-41c9-b79a-e7da227b5c5c',
+  projects: 'a512b661-668b-40cf-ac7b-addd2d77ec15',
+  tasks: 'fedb36da-b3b5-4c66-8ce9-800dc2278db9',
+};
+
+async function queryAll(dataSourceId, params = {}) {
+  const results = [];
+  let cursor;
+  do {
+    const response = await notion.dataSources.query({
+      data_source_id: dataSourceId,
+      start_cursor: cursor,
+      ...params,
+    });
+    results.push(...response.results);
+    cursor = response.has_more ? response.next_cursor : undefined;
+  } while (cursor);
+  return results;
+}
+
+function sendJson(res, status, body) {
+  res.status(status).setHeader('Content-Type', 'application/json').send(JSON.stringify(body));
+}
+
+module.exports = { notion, DATA_SOURCES, queryAll, sendJson };

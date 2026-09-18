@@ -1,0 +1,30 @@
+.screen-header {
+  position: relative;
+  background: radial-gradient(120% 140% at 15% -10%, #163229 0%, #0b0f0d 55%),
+    linear-gradient(160deg, var(--header-bg-start) 0%, var(--header-bg-end) 100%);
+  color: #ffffff;
+  padding: calc(env(safe-area-inset-top, 0px) + 36px) 24px 22px;
+}
+
+.screen-header-eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.screen-header-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.screen-header-subtitle {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  color: #a8afab;
+}

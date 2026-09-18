@@ -2,8 +2,11 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders today screen with priorities, daily plan, and morning brief', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  expect(screen.getByText(/today/i)).toBeInTheDocument();
+  expect(screen.getByText(/priorities/i)).toBeInTheDocument();
+  expect(screen.getByText(/this month/i)).toBeInTheDocument();
+  expect(screen.getByText(/daily plan/i)).toBeInTheDocument();
+  expect(screen.getByText(/morning brief/i)).toBeInTheDocument();
 });

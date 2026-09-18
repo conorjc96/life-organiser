@@ -1,0 +1,12 @@
+:root {
+  --accent: #10b981;
+  --accent-dark: #059669;
+  --accent-tint: rgba(16, 185, 129, 0.12);
+  --accent-tint-strong: rgba(16, 185, 129, 0.2);
+  --ink: #18181b;
+  --ink-soft: #52525b;
+  --ink-faint: #a1a1aa;
+  --bg: #f7f7f5;
+  --header-bg-start: #0e1512;
+  --header-bg-end: #0a0d0b;
+}

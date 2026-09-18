@@ -1,0 +1,218 @@
+.today-screen {
+  min-height: 100vh;
+  background-color: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Header ---------- */
+
+.today-header {
+  position: relative;
+  background: radial-gradient(120% 140% at 15% -10%, #163229 0%, #0b0f0d 55%),
+    linear-gradient(160deg, #0e1512 0%, #0a0d0b 100%);
+  color: #ffffff;
+  padding: calc(env(safe-area-inset-top, 0px) + 40px) 24px 34px;
+  overflow: hidden;
+}
+
+.today-header::after {
+  content: '';
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(16, 185, 129, 0.55),
+    rgba(16, 185, 129, 0) 70%
+  );
+}
+
+.today-greeting {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.today-title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+}
+
+.today-date {
+  margin: 6px 0 0;
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0.01em;
+  color: #cfd4d1;
+}
+
+/* ---------- Layout ---------- */
+
+.today-body {
+  flex: 1;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 22px 16px 48px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---------- Cards ---------- */
+
+.card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 22px 20px 24px;
+  border: 1px solid rgba(24, 24, 27, 0.04);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 12px 28px -18px rgba(24, 24, 27, 0.22);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+@media (hover: hover) {
+  .card:hover {
+    box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 18px 34px -16px rgba(24, 24, 27, 0.26);
+    transform: translateY(-1px);
+  }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 4px;
+}
+
+.section-icon {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.section-title {
+  margin: 0;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.section-tag {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  background-color: var(--accent-tint);
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+.section-tag--count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Priorities ---------- */
+
+.priorities-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.priority-item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  padding: 13px 14px;
+  background: linear-gradient(180deg, #fafaf9 0%, #f5f6f5 100%);
+  border-radius: 13px;
+  border-left: 3px solid var(--accent);
+}
+
+.priority-number {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.priority-text {
+  flex: 1;
+  line-height: 1.35;
+}
+
+.priority-area {
+  color: var(--ink-faint);
+  font-weight: 400;
+}
+
+.section-status {
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: var(--ink-faint);
+}
+
+.section-status--error {
+  color: #b91c1c;
+}
+
+/* ---------- Daily Plan ---------- */
+
+.plan-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.plan-item {
+  border-bottom: 1px solid #f0f0ee;
+}
+
+.plan-item:last-child {
+  border-bottom: none;
+}
+
+/* ---------- Morning Brief ---------- */
+
+.card--brief {
+  background: linear-gradient(150deg, #fffdf7 0%, #f0fbf6 100%);
+  border-color: rgba(16, 185, 129, 0.12);
+}
+
+.brief-text {
+  margin: 14px 0 0;
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-size: 16.5px;
+  font-style: italic;
+  line-height: 1.55;
+  color: #3f3f38;
+}
