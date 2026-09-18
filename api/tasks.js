@@ -1,11 +1,14 @@
 const { notion, DATA_SOURCES, queryAll, sendJson } = require('./_lib/notion');
+const { getProjectsMap } = require('./_lib/projects');
 const { getTitle, getSelect, getDate, getRelationIds } = require('./_lib/notion-utils');
 
 const VALID_WHEN = ['Today', 'This Week', 'Backlog'];
 const VALID_STATUS = ['To Do', 'In Progress', 'Done', 'Cancelled'];
 
-function normalizeTask(page) {
+function normalizeTask(page, projectsMap) {
   const props = page.properties;
+  const projectIds = getRelationIds(props['Project Link']);
+  const project = projectsMap.get(projectIds[0]) || null;
   return {
     id: page.id,
     name: getTitle(props.Task),
@@ -14,7 +17,9 @@ function normalizeTask(page) {
     status: getSelect(props.Status),
     due: getDate(props.Due),
     area: getSelect(props.Area),
-    projectIds: getRelationIds(props['Project Link']),
+    projectIds,
+    projectName: project?.name ?? null,
+    projectIcon: project?.icon ?? null,
   };
 }
 
@@ -32,8 +37,11 @@ async function handleGet(req, res) {
   if (when && !VALID_WHEN.includes(when)) {
     return sendJson(res, 400, { error: `when must be one of ${VALID_WHEN.join(', ')}` });
   }
-  const pages = await queryAll(DATA_SOURCES.tasks, buildFilter(when, projectId));
-  const tasks = pages.map(normalizeTask);
+  const [pages, projectsMap] = await Promise.all([
+    queryAll(DATA_SOURCES.tasks, buildFilter(when, projectId)),
+    getProjectsMap(),
+  ]);
+  const tasks = pages.map((page) => normalizeTask(page, projectsMap));
   return sendJson(res, 200, { tasks });
 }
 
@@ -56,8 +64,11 @@ async function handlePatch(req, res) {
   if (status !== undefined) properties.Status = { select: { name: status } };
   if (when !== undefined) properties.When = { select: { name: when } };
 
-  const page = await notion.pages.update({ page_id: id, properties });
-  return sendJson(res, 200, { task: normalizeTask(page) });
+  const [page, projectsMap] = await Promise.all([
+    notion.pages.update({ page_id: id, properties }),
+    getProjectsMap(),
+  ]);
+  return sendJson(res, 200, { task: normalizeTask(page, projectsMap) });
 }
 
 module.exports = async function handler(req, res) {

@@ -26,9 +26,9 @@ function AnimatedCheckbox({ checked, onChange, label, sublabel, overdue }) {
       </span>
       <span className={labelClass}>
         {label}
-        {sublabel && <span className="anim-checkbox-sublabel"> · {sublabel}</span>}
         <span className="strike" />
       </span>
+      {sublabel && <span className="anim-checkbox-tag">{sublabel}</span>}
     </label>
   );
 }

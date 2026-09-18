@@ -57,7 +57,11 @@
 
 .anim-checkbox-label {
   position: relative;
-  display: inline-block;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 15px;
   font-weight: 500;
   color: var(--ink);
@@ -88,11 +92,16 @@
   color: #dc2626;
 }
 
-.anim-checkbox-label.overdue .anim-checkbox-sublabel {
-  color: #dc2626;
-}
-
-.anim-checkbox-sublabel {
-  font-weight: 400;
-  color: var(--ink-faint);
+.anim-checkbox-tag {
+  flex-shrink: 0;
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background-color: #f4f4f2;
+  padding: 3px 9px;
+  border-radius: 999px;
 }

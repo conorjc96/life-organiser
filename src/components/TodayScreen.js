@@ -106,6 +106,9 @@ function TodayScreen() {
         id: t.id,
         kind: 'task',
         label: t.name,
+        sublabel: t.projectName
+          ? `${t.projectIcon ? `${t.projectIcon} ` : ''}${t.projectName}`
+          : null,
         done: t.status === 'Done',
         overdue: isOverdue(t.due),
       })),
@@ -114,7 +117,7 @@ function TodayScreen() {
         id: a.id,
         kind: 'activity',
         label: a.name,
-        areaName: a.areaName,
+        sublabel: a.areaName,
         done: a.lastDone === today,
       })),
     ];
@@ -259,7 +262,7 @@ function TodayScreen() {
                     checked={item.done}
                     onChange={() => toggleItem(item)}
                     label={item.label}
-                    sublabel={item.areaName}
+                    sublabel={item.sublabel}
                     overdue={item.overdue}
                   />
                 </li>
