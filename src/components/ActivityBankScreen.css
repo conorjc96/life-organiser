@@ -19,6 +19,21 @@
   gap: 12px;
 }
 
+@media (min-width: 860px) {
+  .activity-body {
+    max-width: var(--content-max-width-desktop);
+    padding: 20px 24px 56px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    align-items: start;
+    gap: 14px;
+  }
+
+  .section-status {
+    grid-column: 1 / -1;
+  }
+}
+
 .activity-card {
   background-color: #ffffff;
   border-radius: 16px;

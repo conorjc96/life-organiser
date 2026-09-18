@@ -57,6 +57,11 @@
   color: #cfd4d1;
 }
 
+.today-header-inner {
+  max-width: var(--content-max-width-desktop);
+  margin: 0 auto;
+}
+
 /* ---------- Layout ---------- */
 
 .today-body {
@@ -69,6 +74,41 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+/* Tablet/desktop: use the extra width instead of one long vertical stack.
+   Daily Plan spans the full height of the right column since its list is
+   usually the longest; Priorities, Focus Areas, and Morning Brief stack
+   on the left. */
+@media (min-width: 860px) {
+  .today-body {
+    max-width: var(--content-max-width-desktop);
+    padding: 28px 24px 56px;
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    grid-template-areas:
+      'priorities plan'
+      'focus plan'
+      'brief plan';
+    align-items: start;
+    gap: 20px;
+  }
+
+  .card--priorities {
+    grid-area: priorities;
+  }
+
+  .card--focus {
+    grid-area: focus;
+  }
+
+  .card--plan {
+    grid-area: plan;
+  }
+
+  .card--brief {
+    grid-area: brief;
+  }
 }
 
 /* ---------- Cards ---------- */
@@ -181,6 +221,46 @@
 
 .section-status--error {
   color: #b91c1c;
+}
+
+/* ---------- Focus Areas ---------- */
+
+.focus-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.focus-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, #fdf6ec 0%, #fbf1e4 100%);
+  border-radius: 12px;
+  border-left: 3px solid #d97706;
+  font-size: 14px;
+}
+
+.focus-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.focus-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.focus-last {
+  font-size: 12px;
+  font-weight: 600;
+  color: #b45309;
+  white-space: nowrap;
 }
 
 /* ---------- Daily Plan ---------- */

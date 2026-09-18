@@ -17,6 +17,28 @@
   gap: 12px;
 }
 
+/* Cards expand/collapse to variable heights, so a strict grid would leave
+   gaps next to a short card beside a tall expanded one — CSS columns flow
+   cards masonry-style instead, which handles that gracefully. */
+@media (min-width: 860px) {
+  .projects-body {
+    max-width: var(--content-max-width-desktop);
+    padding: 20px 24px 56px;
+    display: block;
+    column-count: 2;
+    column-gap: 14px;
+  }
+
+  .project-card {
+    break-inside: avoid;
+    margin-bottom: 14px;
+  }
+
+  .section-status {
+    column-span: all;
+  }
+}
+
 .project-card {
   background-color: #ffffff;
   border-radius: 16px;

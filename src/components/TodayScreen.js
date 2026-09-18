@@ -1,9 +1,33 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { getGoals, getTasks, getActivities, setTaskStatus, setActivityLastDone } from '../api/notion';
+import { getGoals, getTasks, getActivities, getAreas, setTaskStatus, setActivityLastDone } from '../api/notion';
 import { getTodayPlanIds, todayIsoDate } from '../utils/dailyPlan';
-import { isOverdue } from '../utils/date';
+import { isOverdue, daysSince, formatLastDone } from '../utils/date';
 import AnimatedCheckbox from './AnimatedCheckbox';
 import './TodayScreen.css';
+
+const FOCUS_AREA_COUNT = 3;
+
+// Focus Areas ≠ Priorities: Priorities are this month's Goals (what you're
+// working toward). Focus Areas is a balance signal derived from Activities'
+// Last Done — which of the 8 life areas has gone quietest lately, independent
+// of any goal.
+function computeFocusAreas(activities, areas) {
+  const latestByArea = new Map();
+  for (const activity of activities) {
+    if (!activity.areaId || !activity.lastDone) continue;
+    const current = latestByArea.get(activity.areaId);
+    if (!current || activity.lastDone > current) {
+      latestByArea.set(activity.areaId, activity.lastDone);
+    }
+  }
+  return areas
+    .map((area) => {
+      const lastDone = latestByArea.get(area.id) || null;
+      return { ...area, lastDone, neglectDays: daysSince(lastDone) };
+    })
+    .sort((a, b) => b.neglectDays - a.neglectDays)
+    .slice(0, FOCUS_AREA_COUNT);
+}
 
 const MORNING_BRIEF =
   "Looks like a full one today — take it one step at a time, and save something for yourself before the day ends.";
@@ -23,6 +47,9 @@ function TodayScreen() {
   const [tasks, setTasks] = useState([]);
   const [planActivities, setPlanActivities] = useState([]);
   const [planState, setPlanState] = useState('loading');
+
+  const [focusAreas, setFocusAreas] = useState([]);
+  const [focusState, setFocusState] = useState('loading');
 
   useEffect(() => {
     let cancelled = false;
@@ -45,8 +72,8 @@ function TodayScreen() {
   useEffect(() => {
     let cancelled = false;
     const planIds = getTodayPlanIds();
-    Promise.all([getTasks({ when: 'Today' }), getActivities()])
-      .then(([taskList, activityList]) => {
+    Promise.all([getTasks({ when: 'Today' }), getActivities(), getAreas()])
+      .then(([taskList, activityList, areaList]) => {
         if (cancelled) return;
         // Tasks have no "completed on" date, only a Status — so a Done task
         // has no reliable way to tell whether it was finished today or
@@ -56,11 +83,15 @@ function TodayScreen() {
         setTasks(taskList.filter((t) => t.status !== 'Done'));
         setPlanActivities(activityList.filter((a) => planIds.includes(a.id)));
         setPlanState('ready');
+
+        setFocusAreas(computeFocusAreas(activityList, areaList));
+        setFocusState('ready');
       })
       .catch((err) => {
         if (cancelled) return;
         console.error('Failed to load daily plan', err);
         setPlanState('error');
+        setFocusState('error');
       });
     return () => {
       cancelled = true;
@@ -133,13 +164,15 @@ function TodayScreen() {
   return (
     <div className="today-screen">
       <header className="today-header">
-        <p className="today-greeting">{greeting}</p>
-        <h1 className="today-title">Today</h1>
-        <p className="today-date">{today}</p>
+        <div className="today-header-inner">
+          <p className="today-greeting">{greeting}</p>
+          <h1 className="today-title">Today</h1>
+          <p className="today-date">{today}</p>
+        </div>
       </header>
 
       <main className="today-body">
-        <section className="card">
+        <section className="card card--priorities">
           <div className="section-header">
             <span className="section-icon" aria-hidden="true">🎯</span>
             <h2 className="section-title">Priorities</h2>
@@ -173,7 +206,33 @@ function TodayScreen() {
           )}
         </section>
 
-        <section className="card">
+        <section className="card card--focus">
+          <div className="section-header">
+            <span className="section-icon" aria-hidden="true">🧭</span>
+            <h2 className="section-title">Focus Areas</h2>
+          </div>
+          {focusState === 'loading' && (
+            <p className="section-status">Loading focus areas…</p>
+          )}
+          {focusState === 'error' && (
+            <p className="section-status section-status--error">
+              Couldn't load focus areas from Notion.
+            </p>
+          )}
+          {focusState === 'ready' && (
+            <ul className="focus-list">
+              {focusAreas.map((area) => (
+                <li key={area.id} className="focus-item">
+                  <span className="focus-icon" aria-hidden="true">{area.icon}</span>
+                  <span className="focus-name">{area.name}</span>
+                  <span className="focus-last">{formatLastDone(area.lastDone)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="card card--plan">
           <div className="section-header">
             <span className="section-icon" aria-hidden="true">✅</span>
             <h2 className="section-title">Daily Plan</h2>

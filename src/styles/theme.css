@@ -9,4 +9,10 @@
   --bg: #f7f7f5;
   --header-bg-start: #0e1512;
   --header-bg-end: #0a0d0b;
+  --content-max-width-desktop: 1040px;
 }
+
+/* Shared responsive convention: below this, screens stay single-column
+   mobile layout (max-width 480px); at/above it, screens widen and switch
+   to a grid to use the extra horizontal space on tablet/desktop. */
+

@@ -28,3 +28,8 @@
   font-size: 13.5px;
   color: #a8afab;
 }
+
+.screen-header-inner {
+  max-width: var(--content-max-width-desktop);
+  margin: 0 auto;
+}
