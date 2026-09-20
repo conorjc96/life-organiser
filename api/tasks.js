@@ -45,6 +45,32 @@ async function handleGet(req, res) {
   return sendJson(res, 200, { tasks });
 }
 
+async function handlePost(req, res) {
+  const { name, projectId, when } = req.body || {};
+  if (!name || !name.trim()) {
+    return sendJson(res, 400, { error: 'name is required' });
+  }
+  if (when !== undefined && !VALID_WHEN.includes(when)) {
+    return sendJson(res, 400, { error: `when must be one of ${VALID_WHEN.join(', ')}` });
+  }
+
+  const properties = {
+    Task: { title: [{ text: { content: name.trim() } }] },
+    Status: { select: { name: 'To Do' } },
+    When: { select: { name: when || 'Backlog' } },
+  };
+  if (projectId) properties['Project Link'] = { relation: [{ id: projectId }] };
+
+  const [page, projectsMap] = await Promise.all([
+    notion.pages.create({
+      parent: { type: 'data_source_id', data_source_id: DATA_SOURCES.tasks },
+      properties,
+    }),
+    getProjectsMap(),
+  ]);
+  return sendJson(res, 201, { task: normalizeTask(page, projectsMap) });
+}
+
 async function handlePatch(req, res) {
   const { id, status, when } = req.body || {};
   if (!id) {
@@ -74,6 +100,7 @@ async function handlePatch(req, res) {
 module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') return await handleGet(req, res);
+    if (req.method === 'POST') return await handlePost(req, res);
     if (req.method === 'PATCH') return await handlePatch(req, res);
     return sendJson(res, 405, { error: 'Method not allowed' });
   } catch (err) {

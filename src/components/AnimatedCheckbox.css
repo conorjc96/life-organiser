@@ -5,6 +5,12 @@
   padding: 13px 2px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  /* Flex items default to min-width: auto, which for a nowrap text child
+     means "as wide as the full unwrapped text" — that blocks shrinking
+     and pushes siblings (like the Week/Today buttons) out of view when
+     the row is too narrow. min-width: 0 lets it actually shrink so the
+     inner label's ellipsis can kick in instead. */
+  min-width: 0;
 }
 
 .anim-checkbox input[type='checkbox'] {

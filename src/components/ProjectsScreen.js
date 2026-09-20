@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { getProjects, getTasks, getAreas, setTaskStatus, setTaskWhen } from '../api/notion';
+import { getProjects, getTasks, getAreas, setTaskStatus, setTaskWhen, createTask } from '../api/notion';
 import ScreenHeader from './ScreenHeader';
 import AreaFilter from './AreaFilter';
 import AnimatedCheckbox from './AnimatedCheckbox';
@@ -20,6 +20,12 @@ function ProjectsScreen() {
   const [state, setState] = useState('loading');
   const [selectedAreaId, setSelectedAreaId] = useState('all');
   const [expandedIds, setExpandedIds] = useState(() => new Set());
+  const [newTaskDrafts, setNewTaskDrafts] = useState({});
+  const [creatingIds, setCreatingIds] = useState(() => new Set());
+  // Open defaults to expanded, Completed defaults to collapsed — these Sets
+  // track exceptions to that default, per project.
+  const [openCollapsedIds, setOpenCollapsedIds] = useState(() => new Set());
+  const [completedExpandedIds, setCompletedExpandedIds] = useState(() => new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -66,6 +72,18 @@ function ProjectsScreen() {
     });
   };
 
+  const toggleSet = (setter) => (id) => {
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleOpenSection = toggleSet(setOpenCollapsedIds);
+  const toggleCompletedSection = toggleSet(setCompletedExpandedIds);
+
   const toggleTaskDone = async (task) => {
     const newStatus = task.status === 'Done' ? 'To Do' : 'Done';
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t)));
@@ -77,15 +95,42 @@ function ProjectsScreen() {
     }
   };
 
-  const toggleTaskToday = async (task) => {
-    const isToday = task.when === 'Today';
-    const newWhen = isToday ? 'This Week' : 'Today';
+  const setTaskWhenBucket = async (task, targetWhen) => {
+    // Tapping the already-active bucket clears it back to Backlog, so both
+    // buttons double as an on/off toggle rather than only ever landing on
+    // "Today" (which used to be the only way in, with "This Week" reachable
+    // only as an implicit revert).
+    const newWhen = task.when === targetWhen ? 'Backlog' : targetWhen;
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, when: newWhen } : t)));
     try {
       await setTaskWhen(task.id, newWhen);
     } catch (err) {
       console.error('Failed to update task when', err);
       setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, when: task.when } : t)));
+    }
+  };
+
+  const updateDraft = (projectId, value) => {
+    setNewTaskDrafts((prev) => ({ ...prev, [projectId]: value }));
+  };
+
+  const submitNewTask = async (projectId) => {
+    const name = (newTaskDrafts[projectId] || '').trim();
+    if (!name || creatingIds.has(projectId)) return;
+
+    setCreatingIds((prev) => new Set(prev).add(projectId));
+    try {
+      const task = await createTask({ name, projectId, when: 'Backlog' });
+      setTasks((prev) => [...prev, task]);
+      updateDraft(projectId, '');
+    } catch (err) {
+      console.error('Failed to create task', err);
+    } finally {
+      setCreatingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(projectId);
+        return next;
+      });
     }
   };
 
@@ -114,6 +159,50 @@ function ProjectsScreen() {
           visibleProjects.map((project) => {
             const isExpanded = expandedIds.has(project.id);
             const projectTasks = tasksByProject.get(project.id) || [];
+            const openTasks = projectTasks.filter((t) => t.status !== 'Done');
+            const completedTasks = projectTasks.filter((t) => t.status === 'Done');
+            // Derive counts from the already-fetched tasks list, not the
+            // separately-fetched project's own doneTasks/percentComplete —
+            // those come from a different request and never update when a
+            // task is ticked here, so the progress bar looked frozen.
+            const totalTasks = projectTasks.length;
+            const doneTasks = completedTasks.length;
+            const percentComplete = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+            const isOpenCollapsed = openCollapsedIds.has(project.id);
+            const isCompletedExpanded = completedExpandedIds.has(project.id);
+
+            const renderTaskRow = (task) => (
+              <div key={task.id} className="project-task-row">
+                <AnimatedCheckbox
+                  checked={task.status === 'Done'}
+                  onChange={() => toggleTaskDone(task)}
+                  label={task.name}
+                />
+                <div className="when-toggle-group">
+                  <button
+                    type="button"
+                    className={
+                      task.when === 'This Week'
+                        ? 'when-toggle when-toggle--week when-toggle--active'
+                        : 'when-toggle when-toggle--week'
+                    }
+                    onClick={() => setTaskWhenBucket(task, 'This Week')}
+                  >
+                    Week
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      task.when === 'Today' ? 'when-toggle when-toggle--active' : 'when-toggle'
+                    }
+                    onClick={() => setTaskWhenBucket(task, 'Today')}
+                  >
+                    Today
+                  </button>
+                </div>
+              </div>
+            );
+
             return (
               <div key={project.id} className="project-card">
                 <button
@@ -134,11 +223,11 @@ function ProjectsScreen() {
                     <div className="project-progress-track">
                       <div
                         className="project-progress-fill"
-                        style={{ width: `${project.percentComplete}%` }}
+                        style={{ width: `${percentComplete}%` }}
                       />
                     </div>
                     <span className="project-progress-label">
-                      {project.doneTasks}/{project.totalTasks}
+                      {doneTasks}/{totalTasks}
                     </span>
                   </div>
                   <div className="project-meta">
@@ -154,26 +243,71 @@ function ProjectsScreen() {
                     {projectTasks.length === 0 && (
                       <p className="section-status project-tasks-empty">No tasks yet.</p>
                     )}
-                    {projectTasks.map((task) => (
-                      <div key={task.id} className="project-task-row">
-                        <AnimatedCheckbox
-                          checked={task.status === 'Done'}
-                          onChange={() => toggleTaskDone(task)}
-                          label={task.name}
-                        />
+
+                    {projectTasks.length > 0 && (
+                      <div className="task-subsection">
                         <button
                           type="button"
-                          className={
-                            task.when === 'Today'
-                              ? 'today-toggle today-toggle--active'
-                              : 'today-toggle'
-                          }
-                          onClick={() => toggleTaskToday(task)}
+                          className="task-subsection-header"
+                          onClick={() => toggleOpenSection(project.id)}
+                          aria-expanded={!isOpenCollapsed}
                         >
-                          {task.when === 'Today' ? '✓ Today' : '+ Today'}
+                          <span>Open ({openTasks.length})</span>
+                          <span
+                            className={
+                              isOpenCollapsed ? 'subsection-chevron' : 'subsection-chevron subsection-chevron--open'
+                            }
+                            aria-hidden="true"
+                          >
+                            ›
+                          </span>
                         </button>
+                        {!isOpenCollapsed && openTasks.map(renderTaskRow)}
                       </div>
-                    ))}
+                    )}
+
+                    {projectTasks.length > 0 && (
+                      <div className="task-subsection">
+                        <button
+                          type="button"
+                          className="task-subsection-header"
+                          onClick={() => toggleCompletedSection(project.id)}
+                          aria-expanded={isCompletedExpanded}
+                        >
+                          <span>Completed ({completedTasks.length})</span>
+                          <span
+                            className={
+                              isCompletedExpanded ? 'subsection-chevron subsection-chevron--open' : 'subsection-chevron'
+                            }
+                            aria-hidden="true"
+                          >
+                            ›
+                          </span>
+                        </button>
+                        {isCompletedExpanded && completedTasks.map(renderTaskRow)}
+                      </div>
+                    )}
+
+                    <div className="add-task-row">
+                      <input
+                        type="text"
+                        className="add-task-input"
+                        placeholder="Add a task…"
+                        value={newTaskDrafts[project.id] || ''}
+                        onChange={(e) => updateDraft(project.id, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') submitNewTask(project.id);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="add-task-button"
+                        disabled={!(newTaskDrafts[project.id] || '').trim() || creatingIds.has(project.id)}
+                        onClick={() => submitNewTask(project.id)}
+                      >
+                        Add
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

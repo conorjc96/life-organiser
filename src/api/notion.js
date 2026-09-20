@@ -20,6 +20,19 @@ async function patchJson(path, payload) {
   return res.json();
 }
 
+async function postJson(path, payload) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `POST ${path} failed with ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function getAreas() {
   const { areas } = await getJson('/api/areas');
   return areas;
@@ -64,5 +77,10 @@ export async function setTaskStatus(id, status) {
 
 export async function setTaskWhen(id, when) {
   const { task } = await patchJson('/api/tasks', { id, when });
+  return task;
+}
+
+export async function createTask({ name, projectId, when }) {
+  const { task } = await postJson('/api/tasks', { name, projectId, when });
   return task;
 }
