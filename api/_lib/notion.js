@@ -11,6 +11,14 @@ const DATA_SOURCES = {
   activities: '8d0ff343-ee4a-41c9-b79a-e7da227b5c5c',
   projects: 'a512b661-668b-40cf-ac7b-addd2d77ec15',
   tasks: 'fedb36da-b3b5-4c66-8ce9-800dc2278db9',
+  // Created 2026-09-20 for the Life Wheel feature — one row per (month, area),
+  // score 0-10. Lives in Notion at the same "Life Dashboard" page as the
+  // other databases.
+  lifeWheel: '26d54eb4-df72-46f7-bef6-b6112c677546',
+  // Created 2026-09-20 for the Schedule feature — one row per time block
+  // (Name, Start, End, optional Area, Source: Manual/Suggested). Also on
+  // the "Life Dashboard" page.
+  schedule: '67767f56-b318-4df1-ae24-f0b3a8fbd232',
 };
 
 async function queryAll(dataSourceId, params = {}) {

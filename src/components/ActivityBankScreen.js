@@ -17,21 +17,21 @@ function ActivityBankScreen() {
   const [addedIds, setAddedIds] = useState(() => new Set(getTodayPlanIds()));
 
   useEffect(() => {
-    let cancelled = false;
-    Promise.all([getActivities(), getAreas()])
+    const controller = new AbortController();
+    const { signal } = controller;
+    Promise.all([getActivities(undefined, { signal }), getAreas({ signal })])
       .then(([activityList, areaList]) => {
-        if (cancelled) return;
         setActivities(activityList);
         setAreas(areaList);
         setState('ready');
       })
       .catch((err) => {
-        if (cancelled) return;
+        if (err.name === 'AbortError') return;
         console.error('Failed to load activity bank', err);
         setState('error');
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, []);
 

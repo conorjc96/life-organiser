@@ -33,3 +33,16 @@
   max-width: var(--content-max-width-desktop);
   margin: 0 auto;
 }
+
+.screen-header-back {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}

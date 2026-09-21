@@ -76,10 +76,26 @@
   gap: 18px;
 }
 
+/* Applies at every width — Daily Plan and Today's Schedule always stack
+   as a pair with their own gap. At >=860px this wrapper additionally
+   becomes a single grid item (see below) so the pair sits in one column;
+   below that it's just a normal block-flow child of .today-body's own
+   flex column, same as if it weren't wrapped at all. */
+.today-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 /* Tablet/desktop: use the extra width instead of one long vertical stack.
-   Daily Plan spans the full height of the right column since its list is
-   usually the longest; Priorities, Focus Areas, and Morning Brief stack
-   on the left. */
+   The right column is one grid area ("plan") containing Daily Plan AND
+   Today's Schedule stacked via a plain flex column inside it — Daily Plan
+   is left-aligned to the top of its row-span (align-items: start) rather
+   than stretched, so putting Schedule in its own separate grid area would
+   leave a gap between them whenever Daily Plan's list is short. Grouping
+   them in one wrapper lets Schedule sit directly under Daily Plan
+   regardless of its height. Priorities, This Week, and Morning Brief
+   stack on the left. */
 @media (min-width: 860px) {
   .today-body {
     max-width: var(--content-max-width-desktop);
@@ -88,7 +104,7 @@
     grid-template-columns: 1fr 1.1fr;
     grid-template-areas:
       'priorities plan'
-      'focus plan'
+      'week plan'
       'brief plan';
     align-items: start;
     gap: 20px;
@@ -98,12 +114,12 @@
     grid-area: priorities;
   }
 
-  .card--focus {
-    grid-area: focus;
+  .today-right-column {
+    grid-area: plan;
   }
 
-  .card--plan {
-    grid-area: plan;
+  .card--week {
+    grid-area: week;
   }
 
   .card--brief {
@@ -165,6 +181,16 @@
   font-variant-numeric: tabular-nums;
 }
 
+.section-header--toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ---------- Priorities ---------- */
 
 .priorities-list {
@@ -213,6 +239,21 @@
   font-weight: 400;
 }
 
+.priorities-see-all {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 2px 0;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent-dark);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .section-status {
   margin: 16px 0 0;
   font-size: 14px;
@@ -221,46 +262,6 @@
 
 .section-status--error {
   color: #b91c1c;
-}
-
-/* ---------- Focus Areas ---------- */
-
-.focus-list {
-  list-style: none;
-  margin: 16px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.focus-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: linear-gradient(180deg, #fdf6ec 0%, #fbf1e4 100%);
-  border-radius: 12px;
-  border-left: 3px solid #d97706;
-  font-size: 14px;
-}
-
-.focus-icon {
-  font-size: 16px;
-  line-height: 1;
-}
-
-.focus-name {
-  flex: 1;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.focus-last {
-  font-size: 12px;
-  font-weight: 600;
-  color: #b45309;
-  white-space: nowrap;
 }
 
 /* ---------- Daily Plan ---------- */
@@ -279,6 +280,49 @@
 
 .plan-item:last-child {
   border-bottom: none;
+}
+
+/* ---------- Today's Schedule preview ---------- */
+
+.schedule-preview-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-preview-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0ee;
+}
+
+.schedule-preview-item:last-child {
+  border-bottom: none;
+}
+
+.schedule-preview-time {
+  flex-shrink: 0;
+  width: 68px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.schedule-preview-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.schedule-preview-area {
+  font-weight: 400;
+  color: var(--ink-faint);
 }
 
 /* ---------- Morning Brief ---------- */

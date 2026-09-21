@@ -16,8 +16,17 @@ function augmentResponse(res) {
     return res;
   };
   res.send = function (body) {
-    res.end(body);
+    // Swallow "write after end"/broken-pipe errors from writing to a
+    // socket the client already aborted (e.g. navigated away mid-request)
+    // — this is an unhandled 'error' event that crashes the whole process
+    // if unguarded (Node's default for uncaught EventEmitter 'error').
+    try {
+      res.end(body);
+    } catch {
+      // client is gone, nothing to send it
+    }
   };
+  res.on('error', () => {});
   return res;
 }
 
@@ -62,7 +71,13 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  delete require.cache[require.resolve(filePath)];
+  // Bust the cache for every file under api/ (handler + shared _lib/*
+  // modules), not just the top-level handler — otherwise editing a shared
+  // lib (e.g. adding a new DATA_SOURCES entry) silently keeps serving the
+  // stale cached version until the whole process is restarted.
+  for (const cachedPath of Object.keys(require.cache)) {
+    if (cachedPath.startsWith(apiDir)) delete require.cache[cachedPath];
+  }
   const handler = require(filePath);
   const query = Object.fromEntries(url.searchParams.entries());
 
@@ -77,4 +92,15 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Local API dev server on http://localhost:${PORT}`);
+});
+
+// Last-resort safety net: this server has died silently and repeatedly
+// during development (an unhandled rejection or a write to an
+// already-closed connection otherwise takes the whole process down).
+// Log and keep running instead of crashing.
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception (server staying up):', err);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection (server staying up):', err);
 });

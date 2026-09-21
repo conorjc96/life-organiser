@@ -20,6 +20,10 @@ function normalizeTask(page, projectsMap) {
     projectIds,
     projectName: project?.name ?? null,
     projectIcon: project?.icon ?? null,
+    // Tasks have no "completed on" field, but every Notion page is
+    // auto-timestamped — used as a "last touched" proxy for a project
+    // (completing one of its tasks is the most common edit to it).
+    lastEditedTime: page.last_edited_time,
   };
 }
 

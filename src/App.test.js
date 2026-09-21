@@ -2,9 +2,9 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders today screen with priorities, daily plan, and morning brief', () => {
+test('renders home screen with priorities, daily plan, and morning brief', () => {
   render(<App />);
-  expect(screen.getByText(/today/i)).toBeInTheDocument();
+  expect(screen.getByText(/home/i)).toBeInTheDocument();
   expect(screen.getByText(/priorities/i)).toBeInTheDocument();
   expect(screen.getByText(/this month/i)).toBeInTheDocument();
   expect(screen.getByText(/daily plan/i)).toBeInTheDocument();

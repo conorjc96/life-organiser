@@ -170,17 +170,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.subsection-chevron {
-  font-size: 18px;
-  line-height: 1;
-  transform: rotate(90deg);
-  transition: transform 0.2s ease;
-}
-
-.subsection-chevron--open {
-  transform: rotate(-90deg);
-}
-
 .when-toggle-group {
   flex-shrink: 0;
   display: flex;

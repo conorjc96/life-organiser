@@ -10,9 +10,7 @@ const NO_TIMEFRAME = 'No Timeframe';
 
 const STATUS_CLASS = {
   Complete: 'status-pill--complete',
-  'On Track': 'status-pill--on-track',
   'In Progress': 'status-pill--in-progress',
-  'At Risk': 'status-pill--at-risk',
   'Not Started': 'status-pill--not-started',
 };
 
@@ -36,21 +34,21 @@ function GoalsScreen() {
   const [selectedAreaId, setSelectedAreaId] = useState('all');
 
   useEffect(() => {
-    let cancelled = false;
-    Promise.all([getGoals(), getAreas()])
+    const controller = new AbortController();
+    const { signal } = controller;
+    Promise.all([getGoals(undefined, { signal }), getAreas({ signal })])
       .then(([goalList, areaList]) => {
-        if (cancelled) return;
         setGoals(goalList);
         setAreas(areaList);
         setState('ready');
       })
       .catch((err) => {
-        if (cancelled) return;
+        if (err.name === 'AbortError') return;
         console.error('Failed to load goals', err);
         setState('error');
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, []);
 

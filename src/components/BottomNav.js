@@ -2,11 +2,12 @@ import React from 'react';
 import './BottomNav.css';
 
 const TABS = [
-  { id: 'today', label: 'Today', icon: '🏠' },
+  { id: 'home', label: 'Home', icon: '🏠' },
   { id: 'activities', label: 'Activities', icon: '📚' },
   { id: 'projects', label: 'Projects', icon: '🚀' },
   { id: 'goals', label: 'Goals', icon: '🎯' },
-  { id: 'weekly', label: 'Weekly', icon: '🗓️' },
+  { id: 'stats', label: 'Stats', icon: '📊' },
+  { id: 'schedule', label: 'Schedule', icon: '📅' },
 ];
 
 function BottomNav({ active, onChange }) {

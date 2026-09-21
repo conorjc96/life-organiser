@@ -1,32 +1,52 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { getGoals, getTasks, getActivities, getAreas, setTaskStatus, setActivityLastDone } from '../api/notion';
+import { getGoals, getTasks, getActivities, getLifeWheel, getSchedule, setTaskStatus, setActivityLastDone } from '../api/notion';
 import { getTodayPlanIds, todayIsoDate } from '../utils/dailyPlan';
-import { isOverdue, daysSince, formatLastDone } from '../utils/date';
+import { isOverdue } from '../utils/date';
+import { currentMonthKey } from '../utils/lifeWheel';
+import { todayDateString, timePart, minutesSinceMidnight, currentMinutesOfDay, formatTimeLabel } from '../utils/schedule';
+import { urgencyTier } from '../utils/priority';
 import AnimatedCheckbox from './AnimatedCheckbox';
-import './TodayScreen.css';
+import './HomeScreen.css';
 
-const FOCUS_AREA_COUNT = 3;
+const SCHEDULE_LOOKAHEAD_MINUTES = 5 * 60;
 
-// Focus Areas ≠ Priorities: Priorities are this month's Goals (what you're
-// working toward). Focus Areas is a balance signal derived from Activities'
-// Last Done — which of the 8 life areas has gone quietest lately, independent
-// of any goal.
-function computeFocusAreas(activities, areas) {
-  const latestByArea = new Map();
-  for (const activity of activities) {
-    if (!activity.areaId || !activity.lastDone) continue;
-    const current = latestByArea.get(activity.areaId);
-    if (!current || activity.lastDone > current) {
-      latestByArea.set(activity.areaId, activity.lastDone);
-    }
+const WEEK_COLLAPSED_KEY = 'life-organiser.week-section-collapsed';
+const PRIORITY_LIMIT = 5;
+// Areas with no Life Wheel rating yet sort after every rated area — we have
+// no evidence they're a problem, so they shouldn't crowd out ones we know
+// are low, but they still show up once the higher-signal slots are used.
+const UNRATED_SORT_KEY = 11;
+
+function getStoredWeekCollapsed() {
+  try {
+    return window.localStorage.getItem(WEEK_COLLAPSED_KEY) === '1';
+  } catch {
+    return false;
   }
-  return areas
-    .map((area) => {
-      const lastDone = latestByArea.get(area.id) || null;
-      return { ...area, lastDone, neglectDays: daysSince(lastDone) };
-    })
-    .sort((a, b) => b.neglectDays - a.neglectDays)
-    .slice(0, FOCUS_AREA_COUNT);
+}
+
+function setStoredWeekCollapsed(collapsed) {
+  try {
+    window.localStorage.setItem(WEEK_COLLAPSED_KEY, collapsed ? '1' : '0');
+  } catch {
+    // localStorage unavailable — the preference just won't persist.
+  }
+}
+
+// Shared by the Daily Plan list and the This Week list — both render real
+// Tasks the same way (checkbox + project tag + overdue flag).
+function taskToItem(t) {
+  return {
+    key: `task-${t.id}`,
+    id: t.id,
+    kind: 'task',
+    label: t.name,
+    sublabel: t.projectName
+      ? `${t.projectIcon ? `${t.projectIcon} ` : ''}${t.projectName}`
+      : null,
+    done: t.status === 'Done',
+    overdue: isOverdue(t.due),
+  };
 }
 
 const MORNING_BRIEF =
@@ -40,41 +60,56 @@ function getGreeting(hour) {
   return 'Winding down';
 }
 
-function TodayScreen() {
+function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
   const [priorities, setPriorities] = useState([]);
+  const [areaScores, setAreaScores] = useState({});
   const [prioritiesState, setPrioritiesState] = useState('loading');
 
   const [tasks, setTasks] = useState([]);
   const [planActivities, setPlanActivities] = useState([]);
   const [planState, setPlanState] = useState('loading');
 
-  const [focusAreas, setFocusAreas] = useState([]);
-  const [focusState, setFocusState] = useState('loading');
+  const [weekTasks, setWeekTasks] = useState([]);
+  const [weekState, setWeekState] = useState('loading');
+  const [weekCollapsed, setWeekCollapsed] = useState(getStoredWeekCollapsed);
+
+  const [scheduleBlocks, setScheduleBlocks] = useState([]);
+  const [scheduleState, setScheduleState] = useState('loading');
 
   useEffect(() => {
-    let cancelled = false;
-    getGoals('This Month')
-      .then((goals) => {
-        if (cancelled) return;
+    const controller = new AbortController();
+    const { signal } = controller;
+    Promise.all([
+      getGoals('This Month', { signal }),
+      getLifeWheel(currentMonthKey(), { signal }),
+    ])
+      .then(([goals, ratings]) => {
         setPriorities(goals);
+        const scoreMap = {};
+        for (const r of ratings) if (r.areaId) scoreMap[r.areaId] = r.score;
+        setAreaScores(scoreMap);
         setPrioritiesState('ready');
       })
       .catch((err) => {
-        if (cancelled) return;
+        if (err.name === 'AbortError') return;
         console.error('Failed to load priorities', err);
         setPrioritiesState('error');
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
     const planIds = getTodayPlanIds();
-    Promise.all([getTasks({ when: 'Today' }), getActivities(), getAreas()])
-      .then(([taskList, activityList, areaList]) => {
-        if (cancelled) return;
+    Promise.all([
+      getTasks({ when: 'Today', signal }),
+      getTasks({ when: 'This Week', signal }),
+      getActivities(undefined, { signal }),
+    ])
+      .then(([taskList, weekTaskList, activityList]) => {
         // Tasks have no "completed on" date, only a Status — so a Done task
         // has no reliable way to tell whether it was finished today or
         // months ago. Drop already-Done tasks at load time so stale
@@ -84,34 +119,61 @@ function TodayScreen() {
         setPlanActivities(activityList.filter((a) => planIds.includes(a.id)));
         setPlanState('ready');
 
-        setFocusAreas(computeFocusAreas(activityList, areaList));
-        setFocusState('ready');
+        setWeekTasks(weekTaskList.filter((t) => t.status !== 'Done'));
+        setWeekState('ready');
       })
       .catch((err) => {
-        if (cancelled) return;
+        if (err.name === 'AbortError') return;
         console.error('Failed to load daily plan', err);
         setPlanState('error');
-        setFocusState('error');
+        setWeekState('error');
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getSchedule(todayDateString(), { signal: controller.signal })
+      .then((blocks) => {
+        setScheduleBlocks(blocks);
+        setScheduleState('ready');
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        console.error('Failed to load schedule preview', err);
+        setScheduleState('error');
+      });
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  // "Prioritized" means something real: a goal's own urgency (overdue,
+  // has a deadline) outranks which area it's in — area score is only the
+  // tie-breaker for goals with no urgency signal of their own. A completed
+  // goal is never a "priority."
+  const topPriorities = useMemo(() => {
+    const eligible = priorities.filter((g) => g.status !== 'Complete');
+    const sorted = eligible.sort((a, b) => {
+      const tierA = urgencyTier(a.dueDate);
+      const tierB = urgencyTier(b.dueDate);
+      if (tierA !== tierB) return tierA - tierB;
+      if (tierA <= 1) {
+        return new Date(a.dueDate) - new Date(b.dueDate);
+      }
+      const scoreA = areaScores[a.areaId] ?? UNRATED_SORT_KEY;
+      const scoreB = areaScores[b.areaId] ?? UNRATED_SORT_KEY;
+      return scoreA - scoreB;
+    });
+    return sorted.slice(0, PRIORITY_LIMIT);
+  }, [priorities, areaScores]);
 
   const planItems = useMemo(() => {
     const today = todayIsoDate();
     return [
-      ...tasks.map((t) => ({
-        key: `task-${t.id}`,
-        id: t.id,
-        kind: 'task',
-        label: t.name,
-        sublabel: t.projectName
-          ? `${t.projectIcon ? `${t.projectIcon} ` : ''}${t.projectName}`
-          : null,
-        done: t.status === 'Done',
-        overdue: isOverdue(t.due),
-      })),
+      ...tasks.map(taskToItem),
       ...planActivities.map((a) => ({
         key: `activity-${a.id}`,
         id: a.id,
@@ -123,19 +185,40 @@ function TodayScreen() {
     ];
   }, [tasks, planActivities]);
 
+  const weekItems = useMemo(() => weekTasks.map(taskToItem), [weekTasks]);
+
+  // Blocks currently happening (started already, hasn't ended) or starting
+  // within the next 5 hours — a deliberately short window so Home stays a
+  // "right now" glance, not a full day dump (that's what the Schedule tab
+  // itself is for).
+  const upcomingScheduleBlocks = useMemo(() => {
+    const nowMin = currentMinutesOfDay();
+    return scheduleBlocks
+      .filter((b) => {
+        const startMin = minutesSinceMidnight(timePart(b.start));
+        const endMin = minutesSinceMidnight(timePart(b.end));
+        return endMin > nowMin && startMin <= nowMin + SCHEDULE_LOOKAHEAD_MINUTES;
+      })
+      .sort((a, b) => a.start.localeCompare(b.start));
+  }, [scheduleBlocks]);
+
   const toggleItem = async (item) => {
     if (item.kind === 'task') {
       const newStatus = item.done ? 'To Do' : 'Done';
-      setTasks((prev) =>
-        prev.map((t) => (t.id === item.id ? { ...t, status: newStatus } : t))
-      );
+      const patchTasks = (setter) =>
+        setter((prev) => prev.map((t) => (t.id === item.id ? { ...t, status: newStatus } : t)));
+      patchTasks(setTasks);
+      patchTasks(setWeekTasks);
       try {
         await setTaskStatus(item.id, newStatus);
       } catch (err) {
         console.error('Failed to update task status', err);
-        setTasks((prev) =>
-          prev.map((t) => (t.id === item.id ? { ...t, status: item.done ? 'Done' : 'To Do' } : t))
-        );
+        const revert = (setter) =>
+          setter((prev) =>
+            prev.map((t) => (t.id === item.id ? { ...t, status: item.done ? 'Done' : 'To Do' } : t))
+          );
+        revert(setTasks);
+        revert(setWeekTasks);
       }
     } else {
       const newLastDone = item.done ? null : todayIsoDate();
@@ -155,6 +238,14 @@ function TodayScreen() {
     }
   };
 
+  const toggleWeekCollapsed = () => {
+    setWeekCollapsed((prev) => {
+      const next = !prev;
+      setStoredWeekCollapsed(next);
+      return next;
+    });
+  };
+
   const now = new Date();
   const today = now.toLocaleDateString(undefined, {
     weekday: 'long',
@@ -169,7 +260,7 @@ function TodayScreen() {
       <header className="today-header">
         <div className="today-header-inner">
           <p className="today-greeting">{greeting}</p>
-          <h1 className="today-title">Today</h1>
+          <h1 className="today-title">Home</h1>
           <p className="today-date">{today}</p>
         </div>
       </header>
@@ -192,9 +283,9 @@ function TodayScreen() {
           {prioritiesState === 'ready' && priorities.length === 0 && (
             <p className="section-status">No goals set for this month yet.</p>
           )}
-          {prioritiesState === 'ready' && priorities.length > 0 && (
+          {prioritiesState === 'ready' && topPriorities.length > 0 && (
             <ul className="priorities-list">
-              {priorities.map((goal, index) => (
+              {topPriorities.map((goal, index) => (
                 <li key={goal.id} className="priority-item">
                   <span className="priority-number">{index + 1}</span>
                   <span className="priority-text">
@@ -207,34 +298,14 @@ function TodayScreen() {
               ))}
             </ul>
           )}
-        </section>
-
-        <section className="card card--focus">
-          <div className="section-header">
-            <span className="section-icon" aria-hidden="true">🧭</span>
-            <h2 className="section-title">Focus Areas</h2>
-          </div>
-          {focusState === 'loading' && (
-            <p className="section-status">Loading focus areas…</p>
-          )}
-          {focusState === 'error' && (
-            <p className="section-status section-status--error">
-              Couldn't load focus areas from Notion.
-            </p>
-          )}
-          {focusState === 'ready' && (
-            <ul className="focus-list">
-              {focusAreas.map((area) => (
-                <li key={area.id} className="focus-item">
-                  <span className="focus-icon" aria-hidden="true">{area.icon}</span>
-                  <span className="focus-name">{area.name}</span>
-                  <span className="focus-last">{formatLastDone(area.lastDone)}</span>
-                </li>
-              ))}
-            </ul>
+          {prioritiesState === 'ready' && priorities.length > PRIORITY_LIMIT && (
+            <button type="button" className="priorities-see-all" onClick={onSeeAllGoals}>
+              See all {priorities.length} this month's goals →
+            </button>
           )}
         </section>
 
+        <div className="today-right-column">
         <section className="card card--plan">
           <div className="section-header">
             <span className="section-icon" aria-hidden="true">✅</span>
@@ -271,6 +342,88 @@ function TodayScreen() {
           )}
         </section>
 
+        <section className="card card--schedule">
+          <div className="section-header">
+            <span className="section-icon" aria-hidden="true">📅</span>
+            <h2 className="section-title">Today's Schedule</h2>
+          </div>
+          {scheduleState === 'loading' && <p className="section-status">Loading schedule…</p>}
+          {scheduleState === 'error' && (
+            <p className="section-status section-status--error">
+              Couldn't load the schedule from Notion.
+            </p>
+          )}
+          {scheduleState === 'ready' && upcomingScheduleBlocks.length === 0 && (
+            <p className="section-status">Nothing scheduled in the next 5 hours.</p>
+          )}
+          {scheduleState === 'ready' && upcomingScheduleBlocks.length > 0 && (
+            <ul className="schedule-preview-list">
+              {upcomingScheduleBlocks.map((block) => (
+                <li key={block.id} className="schedule-preview-item">
+                  <span className="schedule-preview-time">{formatTimeLabel(timePart(block.start))}</span>
+                  <span className="schedule-preview-text">
+                    {block.name}
+                    {block.areaName && (
+                      <span className="schedule-preview-area"> · {block.areaIcon} {block.areaName}</span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <button type="button" className="priorities-see-all" onClick={onOpenSchedule}>
+            Open full schedule →
+          </button>
+        </section>
+        </div>
+
+        <section className="card card--week">
+          <button
+            type="button"
+            className="section-header section-header--toggle"
+            onClick={toggleWeekCollapsed}
+            aria-expanded={!weekCollapsed}
+          >
+            <span className="section-icon" aria-hidden="true">🗓️</span>
+            <h2 className="section-title">This Week</h2>
+            <span className="section-tag section-tag--count">{weekItems.length}</span>
+            <span
+              className={weekCollapsed ? 'subsection-chevron' : 'subsection-chevron subsection-chevron--open'}
+              aria-hidden="true"
+            >
+              ›
+            </span>
+          </button>
+          {!weekCollapsed && (
+            <>
+              {weekState === 'loading' && <p className="section-status">Loading this week…</p>}
+              {weekState === 'error' && (
+                <p className="section-status section-status--error">
+                  Couldn't load this week's tasks from Notion.
+                </p>
+              )}
+              {weekState === 'ready' && weekItems.length === 0 && (
+                <p className="section-status">Nothing lined up for later this week yet.</p>
+              )}
+              {weekState === 'ready' && weekItems.length > 0 && (
+                <ul className="plan-list">
+                  {weekItems.map((item) => (
+                    <li key={item.key} className="plan-item">
+                      <AnimatedCheckbox
+                        checked={item.done}
+                        onChange={() => toggleItem(item)}
+                        label={item.label}
+                        sublabel={item.sublabel}
+                        overdue={item.overdue}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </section>
+
         <section className="card card--brief">
           <div className="section-header">
             <span className="section-icon" aria-hidden="true">☀️</span>
@@ -283,4 +436,4 @@ function TodayScreen() {
   );
 }
 
-export default TodayScreen;
+export default HomeScreen;

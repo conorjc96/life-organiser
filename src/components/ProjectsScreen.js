@@ -28,22 +28,30 @@ function ProjectsScreen() {
   const [completedExpandedIds, setCompletedExpandedIds] = useState(() => new Set());
 
   useEffect(() => {
-    let cancelled = false;
-    Promise.all([getProjects(), getTasks(), getAreas()])
+    // Abort in-flight requests on unmount — a boolean guard alone only
+    // suppresses the stale setState, it doesn't stop the request, so
+    // quickly switching tabs leaves old requests running and can exhaust
+    // the browser's per-origin connection limit for everyone else.
+    const controller = new AbortController();
+    const { signal } = controller;
+    Promise.all([
+      getProjects(undefined, { signal }),
+      getTasks({ signal }),
+      getAreas({ signal }),
+    ])
       .then(([projectList, taskList, areaList]) => {
-        if (cancelled) return;
         setProjects(projectList);
         setTasks(taskList);
         setAreas(areaList);
         setState('ready');
       })
       .catch((err) => {
-        if (cancelled) return;
+        if (err.name === 'AbortError') return;
         console.error('Failed to load projects', err);
         setState('error');
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, []);
 

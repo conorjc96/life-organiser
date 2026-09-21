@@ -51,3 +51,15 @@
   color: #ffffff;
   background-color: var(--accent);
 }
+
+.subsection-chevron {
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink-faint);
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+}
+
+.subsection-chevron--open {
+  transform: rotate(-90deg);
+}
