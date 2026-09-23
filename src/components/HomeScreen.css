@@ -275,11 +275,267 @@
 }
 
 .plan-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   border-bottom: 1px solid #f0f0ee;
 }
 
 .plan-item:last-child {
   border-bottom: none;
+}
+
+.plan-item .anim-checkbox {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Drag handle for moving a task between Daily Plan and This Week — a
+   dedicated handle (not the whole row) so tapping the checkbox or label
+   never gets mistaken for the start of a drag. Pointer Events, not HTML5
+   drag-and-drop, since HTML5 DnD has unreliable touch support on mobile
+   (this is a PWA on Android) — same convention as the Schedule screen. */
+.drag-handle {
+  flex-shrink: 0;
+  width: 22px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--ink-faint);
+  background: none;
+  border: none;
+  cursor: grab;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  color: var(--ink-soft);
+}
+
+/* Highlights whichever list the dragged task is currently hovering over,
+   so it's clear where it'll land on release. */
+.card--drop-target {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+  background-color: var(--accent-tint);
+}
+
+.add-task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 2px 6px;
+}
+
+.add-task-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.add-task-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background-color: #f7f7f6;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 12px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.add-task-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: #ffffff;
+}
+
+/* Existing-task matches while typing an add-task query — picking one
+   moves that task into the bucket instead of creating a duplicate. */
+.task-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 5;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(24, 24, 27, 0.08);
+  box-shadow: 0 10px 28px -8px rgba(24, 24, 27, 0.25);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.task-search-dropdown li + li {
+  margin-top: 2px;
+}
+
+.task-search-dropdown button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  font-family: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 8px;
+  cursor: pointer;
+}
+
+.task-search-dropdown button:hover,
+.task-search-dropdown button:focus-visible {
+  background-color: var(--accent-tint);
+  outline: none;
+}
+
+.task-search-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.task-search-tag {
+  flex-shrink: 0;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background-color: #f4f4f2;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.add-task-button {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: var(--accent);
+  border: none;
+  border-radius: 999px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.add-task-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ---------- Backlog modal ---------- */
+
+.home-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: rgba(11, 15, 13, 0.5);
+  box-sizing: border-box;
+}
+
+.home-backlog-modal {
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.backlog-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.backlog-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0ee;
+}
+
+.backlog-item:last-child {
+  border-bottom: none;
+}
+
+.backlog-item .anim-checkbox {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+/* The name is the whole reason you opened this modal — never truncate it
+   with an ellipsis here like the compact Daily Plan/Week rows do. Letting
+   it wrap (and the row grow) is what was cutting text off before. */
+.backlog-item .anim-checkbox-label {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.when-toggle-group {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+}
+
+.when-toggle {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  background-color: var(--accent-tint);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 5px 9px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.when-toggle--week {
+  color: #a16207;
+  background-color: rgba(234, 179, 8, 0.16);
+}
+
+.home-backlog-close {
+  align-self: flex-start;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background-color: #f4f4f2;
+  border: none;
+  border-radius: 999px;
+  padding: 9px 16px;
+  cursor: pointer;
 }
 
 /* ---------- Today's Schedule preview ---------- */
