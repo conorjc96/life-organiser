@@ -1,9 +1,10 @@
+/* The checkbox and the label text are two separate tap targets now (see
+   AnimatedCheckbox.js) — this outer element is just a flex row, no longer
+   itself a <label> and no longer itself clickable. */
 .anim-checkbox {
   display: flex;
   align-items: center;
   gap: 13px;
-  padding: 13px 2px;
-  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   /* Flex items default to min-width: auto, which for a nowrap text child
      means "as wide as the full unwrapped text" — that blocks shrinking
@@ -11,6 +12,15 @@
      the row is too narrow. min-width: 0 lets it actually shrink so the
      inner label's ellipsis can kick in instead. */
   min-width: 0;
+}
+
+.checkbox-hit-target {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 13px 2px 13px 2px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .anim-checkbox input[type='checkbox'] {
@@ -72,6 +82,26 @@
   font-weight: 500;
   color: var(--ink);
   transition: color 0.3s ease;
+  /* Resets for when this renders as a <button> (task rows, where clicking
+     the name opens the detail dialog) — harmless on the plain <span>
+     variant (activities, which have no detail dialog to open). */
+  padding: 13px 0;
+  margin: 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.anim-checkbox-label--clickable {
+  cursor: pointer;
+}
+
+.anim-checkbox-label--clickable:hover,
+.anim-checkbox-label--clickable:focus-visible {
+  color: var(--accent-dark);
 }
 
 .anim-checkbox-label .strike {

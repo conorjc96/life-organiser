@@ -17,12 +17,7 @@ function App() {
 
   return (
     <div className="App">
-      {screen === 'home' && (
-        <HomeScreen
-          onSeeAllGoals={() => setScreen('goals')}
-          onOpenSchedule={() => setScreen('schedule')}
-        />
-      )}
+      {screen === 'home' && <HomeScreen onOpenSchedule={() => setScreen('schedule')} />}
       {screen === 'activities' && <ActivityBankScreen />}
       {screen === 'projects' && <ProjectsScreen />}
       {screen === 'goals' && <GoalsScreen />}

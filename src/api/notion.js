@@ -65,6 +65,11 @@ export async function getProjects(areaId, { signal } = {}) {
   return projects;
 }
 
+export async function setProjectFocus(id, focusThisWeek) {
+  const { project } = await patchJson('/api/projects', { id, focusThisWeek });
+  return project;
+}
+
 export async function getTasks({ when, projectId, signal } = {}) {
   const params = new URLSearchParams();
   if (when) params.set('when', when);
@@ -92,6 +97,27 @@ export async function setTaskWhen(id, when) {
 export async function createTask({ name, projectId, when }) {
   const { task } = await postJson('/api/tasks', { name, projectId, when });
   return task;
+}
+
+// General-purpose task edit — powers the task detail dialog, which can
+// change any of these fields at once (unlike setTaskStatus/setTaskWhen,
+// which only ever touch their one field for the simpler list interactions).
+export async function updateTask({ id, name, status, when, priority, due, area, projectId }) {
+  const { task } = await patchJson('/api/tasks', {
+    id,
+    name,
+    status,
+    when,
+    priority,
+    due,
+    area,
+    projectId,
+  });
+  return task;
+}
+
+export async function deleteTask(id) {
+  return deleteJson(`/api/tasks?id=${encodeURIComponent(id)}`);
 }
 
 export async function createGoal({ name, areaId, timeframe }) {
@@ -131,4 +157,14 @@ export async function updateScheduleBlock({ id, name, start, end, areaId }) {
 
 export async function deleteScheduleBlock(id) {
   return deleteJson(`/api/schedule?id=${encodeURIComponent(id)}`);
+}
+
+export async function getHabits({ signal } = {}) {
+  const { habits } = await getJson('/api/habits', { signal });
+  return habits;
+}
+
+export async function setHabitDay(id, day, value) {
+  const { habit } = await patchJson('/api/habits', { id, day, value });
+  return habit;
 }

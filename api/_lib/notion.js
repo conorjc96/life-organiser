@@ -19,6 +19,11 @@ const DATA_SOURCES = {
   // (Name, Start, End, optional Area, Source: Manual/Suggested). Also on
   // the "Life Dashboard" page.
   schedule: '67767f56-b318-4df1-ae24-f0b3a8fbd232',
+  // Pre-existing in the user's workspace, not created by this app — a
+  // weekly grid tracker (one row per habit, a checkbox per day Mon-Sun,
+  // reused across weeks rather than one row per day). Wired up 2026-09-23
+  // for the Home screen's Habits card.
+  habits: '0a5437b2-e912-4a54-91e4-e718029076b3',
 };
 
 async function queryAll(dataSourceId, params = {}) {

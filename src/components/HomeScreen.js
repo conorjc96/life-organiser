@@ -1,31 +1,35 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  getGoals,
   getTasks,
   getActivities,
-  getLifeWheel,
   getSchedule,
+  getHabits,
+  getProjects,
+  getAreas,
   setTaskStatus,
   setActivityLastDone,
   createTask,
   setTaskWhen,
+  setHabitDay,
 } from '../api/notion';
 import { getTodayPlanIds, todayIsoDate } from '../utils/dailyPlan';
 import { isOverdue } from '../utils/date';
-import { currentMonthKey } from '../utils/lifeWheel';
 import { todayDateString, timePart, minutesSinceMidnight, currentMinutesOfDay, formatTimeLabel } from '../utils/schedule';
-import { urgencyTier } from '../utils/priority';
 import AnimatedCheckbox from './AnimatedCheckbox';
+import TaskDetailModal from './TaskDetailModal';
 import './HomeScreen.css';
 
 const SCHEDULE_LOOKAHEAD_MINUTES = 5 * 60;
 
 const WEEK_COLLAPSED_KEY = 'life-organiser.week-section-collapsed';
-const PRIORITY_LIMIT = 5;
-// Areas with no Life Wheel rating yet sort after every rated area — we have
-// no evidence they're a problem, so they shouldn't crowd out ones we know
-// are low, but they still show up once the higher-signal slots are used.
-const UNRATED_SORT_KEY = 11;
+
+// Habits Tracker is a weekly grid (one row per habit, a standing checkbox
+// per weekday reused across weeks) rather than a per-date log — "today"
+// just means reading/writing whichever of these matches the current day.
+const HABIT_DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function todayHabitDay() {
+  return HABIT_DAY_KEYS[new Date().getDay()];
+}
 
 function getStoredWeekCollapsed() {
   try {
@@ -74,10 +78,9 @@ function getGreeting(hour) {
   return 'Winding down';
 }
 
-function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
-  const [priorities, setPriorities] = useState([]);
-  const [areaScores, setAreaScores] = useState({});
-  const [prioritiesState, setPrioritiesState] = useState('loading');
+function HomeScreen({ onOpenSchedule }) {
+  const [habits, setHabits] = useState([]);
+  const [habitsState, setHabitsState] = useState('loading');
 
   const [tasks, setTasks] = useState([]);
   const [planActivities, setPlanActivities] = useState([]);
@@ -110,24 +113,25 @@ function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
   const [backlogDraft, setBacklogDraft] = useState('');
   const [creatingBacklog, setCreatingBacklog] = useState(false);
 
+  // The task detail dialog — opened from any task row (not activities).
+  // Projects are fetched lazily on first open, same lazy-fetch reasoning
+  // as Backlog: most visits never open a task's details.
+  const [detailTask, setDetailTask] = useState(null);
+  const [detailProjects, setDetailProjects] = useState([]);
+  const [detailAreas, setDetailAreas] = useState([]);
+  const [detailLookupsLoaded, setDetailLookupsLoaded] = useState(false);
+
   useEffect(() => {
     const controller = new AbortController();
-    const { signal } = controller;
-    Promise.all([
-      getGoals('This Month', { signal }),
-      getLifeWheel(currentMonthKey(), { signal }),
-    ])
-      .then(([goals, ratings]) => {
-        setPriorities(goals);
-        const scoreMap = {};
-        for (const r of ratings) if (r.areaId) scoreMap[r.areaId] = r.score;
-        setAreaScores(scoreMap);
-        setPrioritiesState('ready');
+    getHabits({ signal: controller.signal })
+      .then((list) => {
+        setHabits(list.filter((h) => h.active));
+        setHabitsState('ready');
       })
       .catch((err) => {
         if (err.name === 'AbortError') return;
-        console.error('Failed to load priorities', err);
-        setPrioritiesState('error');
+        console.error('Failed to load habits', err);
+        setHabitsState('error');
       });
     return () => {
       controller.abort();
@@ -187,25 +191,23 @@ function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
     };
   }, []);
 
-  // "Prioritized" means something real: a goal's own urgency (overdue,
-  // has a deadline) outranks which area it's in — area score is only the
-  // tie-breaker for goals with no urgency signal of their own. A completed
-  // goal is never a "priority."
-  const topPriorities = useMemo(() => {
-    const eligible = priorities.filter((g) => g.status !== 'Complete');
-    const sorted = eligible.sort((a, b) => {
-      const tierA = urgencyTier(a.dueDate);
-      const tierB = urgencyTier(b.dueDate);
-      if (tierA !== tierB) return tierA - tierB;
-      if (tierA <= 1) {
-        return new Date(a.dueDate) - new Date(b.dueDate);
-      }
-      const scoreA = areaScores[a.areaId] ?? UNRATED_SORT_KEY;
-      const scoreB = areaScores[b.areaId] ?? UNRATED_SORT_KEY;
-      return scoreA - scoreB;
-    });
-    return sorted.slice(0, PRIORITY_LIMIT);
-  }, [priorities, areaScores]);
+  const todayKey = todayHabitDay();
+  const habitsDoneCount = habits.filter((h) => h.days[todayKey]).length;
+
+  const toggleHabit = async (habit) => {
+    const newValue = !habit.days[todayKey];
+    setHabits((prev) =>
+      prev.map((h) => (h.id === habit.id ? { ...h, days: { ...h.days, [todayKey]: newValue } } : h))
+    );
+    try {
+      await setHabitDay(habit.id, todayKey, newValue);
+    } catch (err) {
+      console.error('Failed to update habit', err);
+      setHabits((prev) =>
+        prev.map((h) => (h.id === habit.id ? { ...h, days: { ...h.days, [todayKey]: !newValue } } : h))
+      );
+    }
+  };
 
   const planItems = useMemo(() => {
     const today = todayIsoDate();
@@ -344,37 +346,43 @@ function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
     else setWeekDraft('');
   };
 
-  // Moves a task between the Today and This Week buckets (used by the
-  // drag-and-drop handlers below, backlog promotion, and picking a search
-  // match). Optimistically updates whichever local arrays are involved,
-  // then persists. Also clears it from Backlog/allTasks caches so it
-  // doesn't linger there under its old bucket.
+  const WHEN_BY_LIST = { today: 'Today', week: 'This Week', backlog: 'Backlog' };
+
+  // Places `task` into whichever of the three tracked local arrays matches
+  // `when` — Backlog is only kept in sync if its modal is currently open,
+  // since otherwise `backlogTasks` is just stale state nobody's looking at
+  // (openBacklog re-fetches fresh every time it opens).
+  const putTaskIn = (task, when) => {
+    if (when === 'Today') setTasks((prev) => [...prev, { ...task, when }]);
+    else if (when === 'This Week') setWeekTasks((prev) => [...prev, { ...task, when }]);
+    else if (backlogOpen) setBacklogTasks((prev) => [...prev, { ...task, when }]);
+  };
+
+  // Moves a task between Today, This Week, and Backlog — used by the
+  // drag-and-drop handlers below (now a three-way graph: dragging onto the
+  // "View backlog" link moves a task there too, not just between Today and
+  // Week), backlog promotion, and picking a search match. Optimistically
+  // removes the task from every tracked array first (it only ever lives in
+  // one), places it in the destination, then persists.
   const moveTaskBucket = async (task, targetList) => {
-    const newWhen = targetList === 'today' ? 'Today' : 'This Week';
+    const newWhen = WHEN_BY_LIST[targetList];
     if (task.when === newWhen) return;
     const prevWhen = task.when;
 
-    if (targetList === 'today') {
-      setWeekTasks((prev) => prev.filter((t) => t.id !== task.id));
-      setTasks((prev) => [...prev, { ...task, when: newWhen }]);
-    } else {
-      setTasks((prev) => prev.filter((t) => t.id !== task.id));
-      setWeekTasks((prev) => [...prev, { ...task, when: newWhen }]);
-    }
+    setTasks((prev) => prev.filter((t) => t.id !== task.id));
+    setWeekTasks((prev) => prev.filter((t) => t.id !== task.id));
     setBacklogTasks((prev) => prev.filter((t) => t.id !== task.id));
+    putTaskIn(task, newWhen);
     setAllTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, when: newWhen } : t)));
 
     try {
       await setTaskWhen(task.id, newWhen);
     } catch (err) {
       console.error('Failed to move task', err);
-      if (targetList === 'today') {
-        setTasks((prev) => prev.filter((t) => t.id !== task.id));
-        setWeekTasks((prev) => [...prev, { ...task, when: prevWhen }]);
-      } else {
-        setWeekTasks((prev) => prev.filter((t) => t.id !== task.id));
-        setTasks((prev) => [...prev, { ...task, when: prevWhen }]);
-      }
+      setTasks((prev) => prev.filter((t) => t.id !== task.id));
+      setWeekTasks((prev) => prev.filter((t) => t.id !== task.id));
+      setBacklogTasks((prev) => prev.filter((t) => t.id !== task.id));
+      putTaskIn(task, prevWhen);
       setAllTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, when: prevWhen } : t)));
     }
   };
@@ -480,27 +488,53 @@ function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
     }
   };
 
-  const promoteBacklogTask = async (task, targetList) => {
-    const newWhen = targetList === 'today' ? 'Today' : 'This Week';
-    setBacklogTasks((prev) => prev.filter((t) => t.id !== task.id));
-    if (targetList === 'today') {
-      setTasks((prev) => [...prev, { ...task, when: newWhen }]);
-    } else {
-      setWeekTasks((prev) => [...prev, { ...task, when: newWhen }]);
+  // Now just the backlog-modal-specific entry point into the same generic
+  // move — kept as its own name since it's called from very different UI
+  // (a button in the modal, not a drag).
+  const promoteBacklogTask = (task, targetList) => moveTaskBucket(task, targetList);
+
+  const openTaskDetail = (task) => {
+    setDetailTask(task);
+    if (!detailLookupsLoaded) {
+      Promise.all([getProjects(), getAreas()])
+        .then(([projectList, areaList]) => {
+          setDetailProjects(projectList);
+          setDetailAreas(areaList);
+          setDetailLookupsLoaded(true);
+        })
+        .catch((err) => console.error('Failed to load projects/areas for task detail', err));
     }
-    setAllTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, when: newWhen } : t)));
-    try {
-      await setTaskWhen(task.id, newWhen);
-    } catch (err) {
-      console.error('Failed to promote backlog task', err);
-      setBacklogTasks((prev) => [...prev, task]);
-      if (targetList === 'today') {
-        setTasks((prev) => prev.filter((t) => t.id !== task.id));
-      } else {
-        setWeekTasks((prev) => prev.filter((t) => t.id !== task.id));
-      }
-      setAllTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, when: task.when } : t)));
-    }
+  };
+
+  const closeTaskDetail = () => setDetailTask(null);
+
+  // The dialog can change *any* field, including `when` (moving buckets)
+  // and `status` — rather than patching each tracked array in place, pull
+  // the task out of all three and re-insert it wherever the fresh
+  // `updated.when` says it belongs now, same idea as moveTaskBucket.
+  const handleTaskSaved = (updated) => {
+    setTasks((prev) => {
+      const filtered = prev.filter((t) => t.id !== updated.id);
+      return updated.when === 'Today' ? [...filtered, updated] : filtered;
+    });
+    setWeekTasks((prev) => {
+      const filtered = prev.filter((t) => t.id !== updated.id);
+      return updated.when === 'This Week' ? [...filtered, updated] : filtered;
+    });
+    setBacklogTasks((prev) => {
+      const filtered = prev.filter((t) => t.id !== updated.id);
+      return updated.when === 'Backlog' ? [...filtered, updated] : filtered;
+    });
+    setAllTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    closeTaskDetail();
+  };
+
+  const handleTaskDeleted = (taskId) => {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setWeekTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setBacklogTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setAllTasks((prev) => prev.filter((t) => t.id !== taskId));
+    closeTaskDetail();
   };
 
   const toggleWeekCollapsed = () => {
@@ -531,42 +565,40 @@ function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
       </header>
 
       <main className="today-body">
-        <section className="card card--priorities">
+        <section className="card card--habits">
           <div className="section-header">
-            <span className="section-icon" aria-hidden="true">🎯</span>
-            <h2 className="section-title">Priorities</h2>
-            <span className="section-tag">This Month</span>
+            <span className="section-icon" aria-hidden="true">🔄</span>
+            <h2 className="section-title">Habits</h2>
+            <span className="section-tag section-tag--count">
+              {habitsDoneCount}/{habits.length}
+            </span>
           </div>
-          {prioritiesState === 'loading' && (
-            <p className="section-status">Loading priorities…</p>
-          )}
-          {prioritiesState === 'error' && (
+          {habitsState === 'loading' && <p className="section-status">Loading habits…</p>}
+          {habitsState === 'error' && (
             <p className="section-status section-status--error">
-              Couldn't load priorities from Notion.
+              Couldn't load habits from Notion.
             </p>
           )}
-          {prioritiesState === 'ready' && priorities.length === 0 && (
-            <p className="section-status">No goals set for this month yet.</p>
+          {habitsState === 'ready' && habits.length === 0 && (
+            <p className="section-status">No active habits set up yet.</p>
           )}
-          {prioritiesState === 'ready' && topPriorities.length > 0 && (
-            <ul className="priorities-list">
-              {topPriorities.map((goal, index) => (
-                <li key={goal.id} className="priority-item">
-                  <span className="priority-number">{index + 1}</span>
-                  <span className="priority-text">
-                    {goal.name}
-                    {goal.areaName && (
-                      <span className="priority-area"> · {goal.areaName}</span>
-                    )}
-                  </span>
+          {habitsState === 'ready' && habits.length > 0 && (
+            <ul className="plan-list">
+              {habits.map((habit) => (
+                <li key={habit.id} className="plan-item">
+                  <AnimatedCheckbox
+                    checked={habit.days[todayKey]}
+                    onChange={() => toggleHabit(habit)}
+                    label={habit.name}
+                    sublabel={
+                      habit.frequency === 'Weekly' && habit.weeklyTarget
+                        ? `${Object.values(habit.days).filter(Boolean).length}/${habit.weeklyTarget} this week`
+                        : habit.category
+                    }
+                  />
                 </li>
               ))}
             </ul>
-          )}
-          {prioritiesState === 'ready' && priorities.length > PRIORITY_LIMIT && (
-            <button type="button" className="priorities-see-all" onClick={onSeeAllGoals}>
-              See all {priorities.length} this month's goals →
-            </button>
           )}
         </section>
 
@@ -617,6 +649,7 @@ function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
                     label={item.label}
                     sublabel={item.sublabel}
                     overdue={item.overdue}
+                    onLabelClick={item.kind === 'task' ? () => openTaskDetail(item.task) : undefined}
                   />
                 </li>
               ))}
@@ -749,6 +782,7 @@ function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
                         label={item.label}
                         sublabel={item.sublabel}
                         overdue={item.overdue}
+                        onLabelClick={() => openTaskDetail(item.task)}
                       />
                     </li>
                   ))}
@@ -791,8 +825,15 @@ function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
                   Add
                 </button>
               </div>
-              <button type="button" className="priorities-see-all" onClick={openBacklog}>
-                View backlog →
+              <button
+                type="button"
+                className={
+                  dropTarget === 'backlog' ? 'backlog-link backlog-link--drop-target' : 'backlog-link'
+                }
+                data-dnd-list="backlog"
+                onClick={openBacklog}
+              >
+                📥 View backlog →
               </button>
             </>
           )}
@@ -837,6 +878,7 @@ function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
                           : null
                       }
                       overdue={isOverdue(task.due)}
+                      onLabelClick={() => openTaskDetail(task)}
                     />
                     <div className="when-toggle-group">
                       <button
@@ -883,6 +925,17 @@ function HomeScreen({ onSeeAllGoals, onOpenSchedule }) {
             </button>
           </div>
         </div>
+      )}
+
+      {detailTask && (
+        <TaskDetailModal
+          task={detailTask}
+          projects={detailProjects}
+          areas={detailAreas}
+          onClose={closeTaskDetail}
+          onSaved={handleTaskSaved}
+          onDeleted={handleTaskDeleted}
+        />
       )}
     </div>
   );

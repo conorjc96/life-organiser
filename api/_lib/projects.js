@@ -51,4 +51,10 @@ async function getProjectsMap() {
   return new Map(projects.map((project) => [project.id, project]));
 }
 
-module.exports = { getProjects, getProjectsMap, normalizeProject };
+// Called after writing a project (e.g. toggling "Focus This Week") so the
+// next GET doesn't serve the stale pre-write list for up to CACHE_TTL_MS.
+function invalidateProjectsCache() {
+  cache = null;
+}
+
+module.exports = { getProjects, getProjectsMap, normalizeProject, invalidateProjectsCache };

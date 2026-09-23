@@ -4,6 +4,7 @@ const { getTitle, getSelect, getDate, getRelationIds } = require('./_lib/notion-
 
 const VALID_WHEN = ['Today', 'This Week', 'Backlog'];
 const VALID_STATUS = ['To Do', 'In Progress', 'Done', 'Cancelled'];
+const VALID_PRIORITY = ['High', 'Medium', 'Low'];
 
 function normalizeTask(page, projectsMap) {
   const props = page.properties;
@@ -76,12 +77,18 @@ async function handlePost(req, res) {
 }
 
 async function handlePatch(req, res) {
-  const { id, status, when } = req.body || {};
+  const { id, name, status, when, priority, due, area, projectId } = req.body || {};
   if (!id) {
     return sendJson(res, 400, { error: 'id is required' });
   }
-  if (status === undefined && when === undefined) {
-    return sendJson(res, 400, { error: 'status or when is required' });
+  const noFieldsGiven = [name, status, when, priority, due, area, projectId].every(
+    (v) => v === undefined
+  );
+  if (noFieldsGiven) {
+    return sendJson(res, 400, { error: 'at least one field to update is required' });
+  }
+  if (name !== undefined && !name.trim()) {
+    return sendJson(res, 400, { error: 'name cannot be empty' });
   }
   if (status !== undefined && !VALID_STATUS.includes(status)) {
     return sendJson(res, 400, { error: `status must be one of ${VALID_STATUS.join(', ')}` });
@@ -89,10 +96,20 @@ async function handlePatch(req, res) {
   if (when !== undefined && !VALID_WHEN.includes(when)) {
     return sendJson(res, 400, { error: `when must be one of ${VALID_WHEN.join(', ')}` });
   }
+  if (priority && !VALID_PRIORITY.includes(priority)) {
+    return sendJson(res, 400, { error: `priority must be one of ${VALID_PRIORITY.join(', ')}` });
+  }
 
   const properties = {};
+  if (name !== undefined) properties.Task = { title: [{ text: { content: name.trim() } }] };
   if (status !== undefined) properties.Status = { select: { name: status } };
   if (when !== undefined) properties.When = { select: { name: when } };
+  // Priority/Area/Due are all clearable — an empty string or null unsets
+  // the select/date rather than being rejected as invalid input.
+  if (priority !== undefined) properties.Priority = { select: priority ? { name: priority } : null };
+  if (area !== undefined) properties.Area = { select: area ? { name: area } : null };
+  if (due !== undefined) properties.Due = { date: due ? { start: due } : null };
+  if (projectId !== undefined) properties['Project Link'] = { relation: projectId ? [{ id: projectId }] : [] };
 
   const [page, projectsMap] = await Promise.all([
     notion.pages.update({ page_id: id, properties }),
@@ -101,11 +118,23 @@ async function handlePatch(req, res) {
   return sendJson(res, 200, { task: normalizeTask(page, projectsMap) });
 }
 
+async function handleDelete(req, res) {
+  const { id } = req.query;
+  if (!id) {
+    return sendJson(res, 400, { error: 'id is required' });
+  }
+  // Notion has no permanent delete via the API — archiving is its version
+  // (recoverable from the workspace trash), same as Schedule's DELETE.
+  await notion.pages.update({ page_id: id, archived: true });
+  return sendJson(res, 200, { ok: true });
+}
+
 module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') return await handleGet(req, res);
     if (req.method === 'POST') return await handlePost(req, res);
     if (req.method === 'PATCH') return await handlePatch(req, res);
+    if (req.method === 'DELETE') return await handleDelete(req, res);
     return sendJson(res, 405, { error: 'Method not allowed' });
   } catch (err) {
     console.error(`${req.method} /api/tasks failed`, err);
