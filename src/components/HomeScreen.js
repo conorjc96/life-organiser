@@ -599,14 +599,31 @@ function HomeScreen({ onOpenSchedule }) {
   return (
     <div className="today-screen">
       <header className="today-header">
-        <div className="today-header-inner">
-          <p className="today-greeting">{greeting}</p>
-          <h1 className="today-title">Home</h1>
-          <p className="today-date">{today}</p>
+        <div className="today-header-inner today-header-inner--row">
+          <div>
+            <p className="today-greeting">{greeting}</p>
+            <h1 className="today-title">Home</h1>
+            <p className="today-date">{today}</p>
+          </div>
+          {pushStatus !== 'unsupported' && (
+            <button
+              type="button"
+              className={pushStatus === 'on' ? 'notif-bell notif-bell--on' : 'notif-bell'}
+              aria-label={pushStatus === 'on' ? 'Turn off notifications' : 'Enable notifications'}
+              aria-pressed={pushStatus === 'on'}
+              disabled={pushStatus === 'busy'}
+              onClick={pushStatus === 'on' ? handleDisablePush : handleEnablePush}
+            >
+              🔔
+            </button>
+          )}
         </div>
       </header>
 
       <main className="today-body">
+        {pushError && (
+          <p className="section-status section-status--error">{pushError}</p>
+        )}
         <section className="card card--habits">
           <div className="section-header">
             <span className="section-icon" aria-hidden="true">🔄</span>
@@ -891,36 +908,6 @@ function HomeScreen({ onOpenSchedule }) {
           </div>
           <p className="brief-text">{MORNING_BRIEF}</p>
         </section>
-
-        {pushStatus !== 'unsupported' && (
-          <section className="card card--notifications">
-            <div className="section-header">
-              <span className="section-icon" aria-hidden="true">🔔</span>
-              <h2 className="section-title">Notifications</h2>
-            </div>
-            <p className="section-status">
-              {pushStatus === 'on'
-                ? "You'll get a morning digest and an afternoon nudge on this device."
-                : 'Get a morning digest and an afternoon nudge on this device.'}
-            </p>
-            {pushError && <p className="section-status section-status--error">{pushError}</p>}
-            {pushStatus !== 'on' && (
-              <button
-                type="button"
-                className="priorities-see-all"
-                disabled={pushStatus === 'busy'}
-                onClick={handleEnablePush}
-              >
-                {pushStatus === 'busy' ? 'Enabling…' : '🔔 Enable notifications'}
-              </button>
-            )}
-            {pushStatus === 'on' && (
-              <button type="button" className="priorities-see-all" onClick={handleDisablePush}>
-                Turn off
-              </button>
-            )}
-          </section>
-        )}
       </main>
 
       {backlogOpen && (
