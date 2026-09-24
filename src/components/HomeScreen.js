@@ -15,6 +15,7 @@ import {
 import { getTodayPlanIds, todayIsoDate } from '../utils/dailyPlan';
 import { isOverdue } from '../utils/date';
 import { todayDateString, timePart, minutesSinceMidnight, currentMinutesOfDay, formatTimeLabel } from '../utils/schedule';
+import { isPushSupported, getExistingSubscription, subscribeToPush, unsubscribeFromPush } from '../utils/push';
 import AnimatedCheckbox from './AnimatedCheckbox';
 import TaskDetailModal from './TaskDetailModal';
 import './HomeScreen.css';
@@ -120,6 +121,46 @@ function HomeScreen({ onOpenSchedule }) {
   const [detailProjects, setDetailProjects] = useState([]);
   const [detailAreas, setDetailAreas] = useState([]);
   const [detailLookupsLoaded, setDetailLookupsLoaded] = useState(false);
+
+  // 'unsupported' | 'off' | 'on' | 'busy'
+  const [pushStatus, setPushStatus] = useState('off');
+  const [pushError, setPushError] = useState(null);
+
+  useEffect(() => {
+    if (!isPushSupported()) {
+      setPushStatus('unsupported');
+      return;
+    }
+    getExistingSubscription()
+      .then((sub) => setPushStatus(sub ? 'on' : 'off'))
+      .catch(() => setPushStatus('off'));
+  }, []);
+
+  const handleEnablePush = async () => {
+    setPushStatus('busy');
+    setPushError(null);
+    try {
+      await subscribeToPush();
+      setPushStatus('on');
+    } catch (err) {
+      console.error('Failed to enable notifications', err);
+      setPushError(err.message || 'Could not enable notifications');
+      setPushStatus('off');
+    }
+  };
+
+  const handleDisablePush = async () => {
+    setPushStatus('busy');
+    setPushError(null);
+    try {
+      await unsubscribeFromPush();
+      setPushStatus('off');
+    } catch (err) {
+      console.error('Failed to disable notifications', err);
+      setPushError(err.message || 'Could not disable notifications');
+      setPushStatus('on');
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -850,6 +891,36 @@ function HomeScreen({ onOpenSchedule }) {
           </div>
           <p className="brief-text">{MORNING_BRIEF}</p>
         </section>
+
+        {pushStatus !== 'unsupported' && (
+          <section className="card card--notifications">
+            <div className="section-header">
+              <span className="section-icon" aria-hidden="true">🔔</span>
+              <h2 className="section-title">Notifications</h2>
+            </div>
+            <p className="section-status">
+              {pushStatus === 'on'
+                ? "You'll get a morning digest and an afternoon nudge on this device."
+                : 'Get a morning digest and an afternoon nudge on this device.'}
+            </p>
+            {pushError && <p className="section-status section-status--error">{pushError}</p>}
+            {pushStatus !== 'on' && (
+              <button
+                type="button"
+                className="priorities-see-all"
+                disabled={pushStatus === 'busy'}
+                onClick={handleEnablePush}
+              >
+                {pushStatus === 'busy' ? 'Enabling…' : '🔔 Enable notifications'}
+              </button>
+            )}
+            {pushStatus === 'on' && (
+              <button type="button" className="priorities-see-all" onClick={handleDisablePush}>
+                Turn off
+              </button>
+            )}
+          </section>
+        )}
       </main>
 
       {backlogOpen && (

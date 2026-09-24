@@ -69,4 +69,40 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Any other custom service worker logic can go here.
+// Web Push — the morning digest / afternoon nudge cron jobs (api/cron-*.js)
+// send a JSON payload of { title, body, url }; this is what actually shows
+// the OS-level notification on the phone.
+self.addEventListener('push', (event) => {
+  let data = { title: 'L.I.F.E Organiser', body: '' };
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch {
+      data = { title: 'L.I.F.E Organiser', body: event.data.text() };
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'L.I.F.E Organiser', {
+      body: data.body || '',
+      icon: `${self.location.origin}/logo192.png`,
+      badge: `${self.location.origin}/logo192.png`,
+      data: { url: data.url || '/' },
+    })
+  );
+});
+
+// Tapping the notification focuses an already-open tab if there is one,
+// rather than always opening a fresh one.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
+      const existing = clientsArr.find((c) => c.url.startsWith(self.location.origin));
+      if (existing) return existing.focus();
+      return self.clients.openWindow(targetUrl);
+    })
+  );
+});

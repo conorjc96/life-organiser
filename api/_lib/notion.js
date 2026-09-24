@@ -24,6 +24,10 @@ const DATA_SOURCES = {
   // reused across weeks rather than one row per day). Wired up 2026-09-23
   // for the Home screen's Habits card.
   habits: '0a5437b2-e912-4a54-91e4-e718029076b3',
+  // Created 2026-09-24 for Web Push notifications — a single row holding
+  // the one (device) push subscription as JSON. Also on the "Life
+  // Dashboard" page.
+  pushSubscription: '66fcf61f-1071-42f1-8880-16b91fb17f57',
 };
 
 async function queryAll(dataSourceId, params = {}) {

@@ -12,10 +12,11 @@ root.render(
   </React.StrictMode>
 );
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://cra.link/PWA
-serviceWorkerRegistration.unregister();
+// Registered (not unregistered) so the service worker can receive Web
+// Push events even when the app isn't open — see src/service-worker.js
+// and src/utils/push.js. Only takes effect in production builds (see
+// serviceWorkerRegistration.js), so `npm start` still runs unregistered.
+serviceWorkerRegistration.register();
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

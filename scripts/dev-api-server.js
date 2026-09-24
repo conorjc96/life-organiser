@@ -83,7 +83,7 @@ const server = http.createServer(async (req, res) => {
 
   try {
     const body = await readJsonBody(req);
-    await handler({ method: req.method, query, body }, res);
+    await handler({ method: req.method, query, body, headers: req.headers }, res);
   } catch (err) {
     console.error(`API handler "${name}" threw:`, err);
     res.status(500).send(JSON.stringify({ error: 'Internal error' }));
