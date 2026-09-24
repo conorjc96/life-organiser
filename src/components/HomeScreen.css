@@ -244,6 +244,18 @@
   color: #b91c1c;
 }
 
+/* Shown above the Daily Plan list once every item on it is checked off. */
+.plan-complete-banner {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background-color: var(--accent-tint);
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
 /* ---------- Daily Plan ---------- */
 
 .plan-list {

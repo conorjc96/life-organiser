@@ -553,6 +553,7 @@ function HomeScreen({ onOpenSchedule }) {
   });
   const greeting = getGreeting(now.getHours());
   const doneCount = planItems.filter((item) => item.done).length;
+  const dayComplete = planItems.length > 0 && doneCount === planItems.length;
 
   return (
     <div className="today-screen">
@@ -616,6 +617,9 @@ function HomeScreen({ onOpenSchedule }) {
               {doneCount}/{planItems.length}
             </span>
           </div>
+          {planState === 'ready' && dayComplete && (
+            <p className="plan-complete-banner">🎉 Day Complete!</p>
+          )}
           {planState === 'loading' && <p className="section-status">Loading your plan…</p>}
           {planState === 'error' && (
             <p className="section-status section-status--error">

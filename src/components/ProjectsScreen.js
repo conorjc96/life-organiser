@@ -22,6 +22,24 @@ const STATUS_CLASS = {
   Paused: 'status-pill--at-risk',
 };
 
+const OTHER_COLLAPSED_KEY = 'life-organiser.projects-other-collapsed';
+
+function getStoredOtherCollapsed() {
+  try {
+    return window.localStorage.getItem(OTHER_COLLAPSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setStoredOtherCollapsed(collapsed) {
+  try {
+    window.localStorage.setItem(OTHER_COLLAPSED_KEY, collapsed ? '1' : '0');
+  } catch {
+    // localStorage unavailable — the preference just won't persist.
+  }
+}
+
 function ProjectsScreen() {
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -36,6 +54,7 @@ function ProjectsScreen() {
   const [openCollapsedIds, setOpenCollapsedIds] = useState(() => new Set());
   const [completedExpandedIds, setCompletedExpandedIds] = useState(() => new Set());
   const [detailTask, setDetailTask] = useState(null);
+  const [otherCollapsed, setOtherCollapsed] = useState(getStoredOtherCollapsed);
 
   useEffect(() => {
     // Abort in-flight requests on unmount — a boolean guard alone only
@@ -186,6 +205,14 @@ function ProjectsScreen() {
         prev.map((p) => (p.id === project.id ? { ...p, focusThisWeek: project.focusThisWeek } : p))
       );
     }
+  };
+
+  const toggleOtherCollapsed = () => {
+    setOtherCollapsed((prev) => {
+      const next = !prev;
+      setStoredOtherCollapsed(next);
+      return next;
+    });
   };
 
   const renderTaskRow = (task) => (
@@ -376,13 +403,37 @@ function ProjectsScreen() {
         )}
 
         {state === 'ready' && priorityProjects.length > 0 && (
-          <>
+          <section className="projects-priority-section">
             <h2 className="projects-section-title">⭐ Priority</h2>
-            {priorityProjects.map(renderProjectCard)}
-          </>
+            <div className="projects-priority-grid">{priorityProjects.map(renderProjectCard)}</div>
+          </section>
         )}
 
-        {state === 'ready' && otherProjects.map(renderProjectCard)}
+        {state === 'ready' && priorityProjects.length > 0 && (
+          <button
+            type="button"
+            className="projects-section-header"
+            onClick={toggleOtherCollapsed}
+            aria-expanded={!otherCollapsed}
+          >
+            <h2 className="projects-section-title projects-section-title--inline">Other Projects</h2>
+            <span className="projects-section-count">{otherProjects.length}</span>
+            <span
+              className={otherCollapsed ? 'subsection-chevron' : 'subsection-chevron subsection-chevron--open'}
+              aria-hidden="true"
+            >
+              ›
+            </span>
+          </button>
+        )}
+
+        {/* The collapse toggle only exists when there's a Priority section to
+            collapse *away from* — without one, there's nothing to hide
+            behind, so ignore a stale collapsed flag from a previous visit
+            that did have one. */}
+        {state === 'ready' && (priorityProjects.length === 0 || !otherCollapsed) && (
+          <div className="projects-masonry">{otherProjects.map(renderProjectCard)}</div>
+        )}
       </main>
 
       {detailTask && (
