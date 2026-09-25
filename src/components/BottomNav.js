@@ -8,6 +8,7 @@ const TABS = [
   { id: 'goals', label: 'Goals', icon: '🎯' },
   { id: 'stats', label: 'Stats', icon: '📊' },
   { id: 'schedule', label: 'Schedule', icon: '📅' },
+  { id: 'music', label: 'Music', icon: '🎵' },
 ];
 
 function BottomNav({ active, onChange }) {

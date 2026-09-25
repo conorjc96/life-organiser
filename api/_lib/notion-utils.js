@@ -22,6 +22,10 @@ function getCheckbox(prop) {
   return Boolean(prop?.checkbox);
 }
 
+function getUrl(prop) {
+  return prop?.url ?? null;
+}
+
 function getRelationIds(prop) {
   return (prop?.relation || []).map((r) => r.id);
 }
@@ -51,6 +55,7 @@ module.exports = {
   getMultiSelect,
   getDate,
   getCheckbox,
+  getUrl,
   getRelationIds,
   getRollup,
   getFormula,

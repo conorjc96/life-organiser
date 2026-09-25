@@ -168,3 +168,33 @@ export async function setHabitDay(id, day, value) {
   const { habit } = await patchJson('/api/habits', { id, day, value });
   return habit;
 }
+
+export async function getSongParts({ songPart, used, signal } = {}) {
+  const params = new URLSearchParams();
+  if (songPart) params.set('songPart', songPart);
+  if (used !== undefined) params.set('used', String(used));
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const { songParts } = await getJson(`/api/song-parts${query}`, { signal });
+  return songParts;
+}
+
+export async function createSongPart({ name, songPart, link, projectId }) {
+  const { songPart: created } = await postJson('/api/song-parts', { name, songPart, link, projectId });
+  return created;
+}
+
+export async function updateSongPart({ id, name, songPart, link, projectId, used }) {
+  const { songPart: updated } = await patchJson('/api/song-parts', {
+    id,
+    name,
+    songPart,
+    link,
+    projectId,
+    used,
+  });
+  return updated;
+}
+
+export async function deleteSongPart(id) {
+  return deleteJson(`/api/song-parts?id=${encodeURIComponent(id)}`);
+}

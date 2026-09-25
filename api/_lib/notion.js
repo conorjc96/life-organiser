@@ -28,6 +28,11 @@ const DATA_SOURCES = {
   // the one (device) push subscription as JSON. Also on the "Life
   // Dashboard" page.
   pushSubscription: '66fcf61f-1071-42f1-8880-16b91fb17f57',
+  // Created 2026-09-25 for the Music tab — one row per raw BandLab
+  // recording (verse/chorus/riff/etc.), optionally linked to a Projects
+  // row once earmarked for a specific song. Also on the "Life Dashboard"
+  // page.
+  songParts: '74e668e6-8d66-4f13-b953-b1627bf832e4',
 };
 
 async function queryAll(dataSourceId, params = {}) {
