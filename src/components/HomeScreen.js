@@ -18,6 +18,7 @@ import { todayDateString, timePart, minutesSinceMidnight, currentMinutesOfDay, f
 import { isPushSupported, getExistingSubscription, subscribeToPush, unsubscribeFromPush } from '../utils/push';
 import AnimatedCheckbox from './AnimatedCheckbox';
 import TaskDetailModal from './TaskDetailModal';
+import FoodScreen from './FoodScreen';
 import './HomeScreen.css';
 
 const SCHEDULE_LOOKAHEAD_MINUTES = 5 * 60;
@@ -788,6 +789,14 @@ function HomeScreen({ onOpenSchedule }) {
           <button type="button" className="priorities-see-all" onClick={onOpenSchedule}>
             Open full schedule →
           </button>
+        </section>
+
+        <section className="card card--food">
+          <div className="section-header">
+            <span className="section-icon" aria-hidden="true">🍽️</span>
+            <h2 className="section-title">Food Today</h2>
+          </div>
+          <FoodScreen showDateNav={false} />
         </section>
         </div>
 

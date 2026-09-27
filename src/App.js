@@ -9,6 +9,7 @@ import StatsScreen from './components/StatsScreen';
 import LifeWheelScreen from './components/LifeWheelScreen';
 import ScheduleScreen from './components/ScheduleScreen';
 import MusicScreen from './components/MusicScreen';
+import WorkoutScreen from './components/WorkoutScreen';
 import BottomNav from './components/BottomNav';
 import './App.css';
 
@@ -26,6 +27,7 @@ function App() {
       {screen === 'life-wheel' && <LifeWheelScreen onBack={() => setScreen('stats')} />}
       {screen === 'schedule' && <ScheduleScreen />}
       {screen === 'music' && <MusicScreen />}
+      {screen === 'workout' && <WorkoutScreen />}
       {!isSubPage && <BottomNav active={screen} onChange={setScreen} />}
     </div>
   );

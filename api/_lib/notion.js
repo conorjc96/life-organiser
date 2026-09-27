@@ -33,6 +33,25 @@ const DATA_SOURCES = {
   // row once earmarked for a specific song. Also on the "Life Dashboard"
   // page.
   songParts: '74e668e6-8d66-4f13-b953-b1627bf832e4',
+  // Created 2026-09-27 for the Workout tab — a small reusable exercise
+  // library (Name, Category), separate from the log entries themselves.
+  exercises: 'c74d08ee-e77c-4a1a-9b14-acce16b048ce',
+  // Created 2026-09-27 for the Workout tab — one row per exercise *per
+  // session* (not per individual set): Weight/Reps/Sets together describe
+  // e.g. "60kg x 8 reps x 3 sets" in a single row. Deliberately flat, no
+  // separate "Workout Session" database — grouping log rows by Date in the
+  // UI reconstructs "today's workout" without a second relation to manage.
+  workoutLog: '7a128bca-0061-4601-ab3d-48d940ac87e1',
+  // Created 2026-09-27 for the Food tracker (a sub-view of the Workout
+  // tab, not its own bottom-nav tab — see [[project-life-organiser-workout]]).
+  // Foods stores default Calories/Protein/Carbs/Fat per item, reused via
+  // find-or-create the same way Exercises works.
+  foods: '40a33c70-63eb-4856-95b5-76141e52807e',
+  // One row per logged food per meal per day. Calories/macros are copied
+  // from Foods at log time but stay independently editable per entry (a
+  // bigger-than-usual portion that day shouldn't require editing the
+  // food's stored defaults).
+  foodLog: '97a96912-1357-4836-849a-88176db1f60b',
 };
 
 async function queryAll(dataSourceId, params = {}) {

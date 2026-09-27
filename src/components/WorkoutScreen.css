@@ -1,0 +1,280 @@
+.workout-screen {
+  min-height: 100vh;
+  background-color: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.workout-body {
+  flex: 1;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+  box-sizing: border-box;
+}
+
+/* ---------- Workouts / Food sub-view toggle ---------- */
+
+.workout-view-toggle {
+  display: flex;
+  gap: 4px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px 12px;
+  box-sizing: border-box;
+}
+
+.workout-view-tab {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background-color: #f4f4f2;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 9px 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.workout-view-tab--active {
+  background-color: var(--accent-tint);
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+/* ---------- Log form (same visual language as add-task-row elsewhere) ---------- */
+
+.workout-log-form {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(24, 24, 27, 0.04);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 10px 24px -18px rgba(24, 24, 27, 0.2);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.workout-log-row {
+  display: flex;
+  gap: 8px;
+}
+
+.add-task-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background-color: #f7f7f6;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+
+.add-task-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: #ffffff;
+}
+
+.workout-date-input {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink);
+  background-color: #f7f7f6;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 8px;
+  width: 132px;
+}
+
+.workout-number-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background-color: #f7f7f6;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+
+.workout-number-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: #ffffff;
+}
+
+.add-task-button {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: var(--accent);
+  border: none;
+  border-radius: 999px;
+  padding: 9px 16px;
+  cursor: pointer;
+}
+
+.add-task-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ---------- Exercise filter chips (duplicated from AreaFilter.css) ---------- */
+
+.area-filter {
+  padding: 0 0 14px;
+  background: none;
+}
+
+.area-filter-inner {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.area-filter-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.area-chip {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background-color: #f4f4f2;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.area-chip--active {
+  background-color: var(--accent-tint);
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+/* ---------- Date-grouped entry list ---------- */
+
+.workout-date-group {
+  margin-bottom: 18px;
+}
+
+.workout-date-title {
+  margin: 0 2px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.workout-entry-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.workout-entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(24, 24, 27, 0.04);
+}
+
+.workout-entry-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.workout-entry-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workout-entry-stats {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.workout-delete-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-right: 6px;
+  border-radius: 50%;
+  font-size: 16px;
+  color: var(--ink-faint);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.workout-edit-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  flex-wrap: wrap;
+}
+
+.workout-save-btn {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: var(--accent);
+  border: none;
+  border-radius: 999px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+.workout-cancel-btn {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background-color: #f4f4f2;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 12px;
+  cursor: pointer;
+}

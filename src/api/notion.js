@@ -198,3 +198,71 @@ export async function updateSongPart({ id, name, songPart, link, projectId, used
 export async function deleteSongPart(id) {
   return deleteJson(`/api/song-parts?id=${encodeURIComponent(id)}`);
 }
+
+export async function getExercises({ signal } = {}) {
+  const { exercises } = await getJson('/api/exercises', { signal });
+  return exercises;
+}
+
+export async function setExerciseCategory(id, category) {
+  const { exercise } = await patchJson('/api/exercises', { id, category });
+  return exercise;
+}
+
+export async function getWorkoutLog({ exerciseId, date, signal } = {}) {
+  const params = new URLSearchParams();
+  if (exerciseId) params.set('exerciseId', exerciseId);
+  if (date) params.set('date', date);
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const { entries } = await getJson(`/api/workout-log${query}`, { signal });
+  return entries;
+}
+
+export async function createWorkoutEntry({ exerciseName, date, weight, reps, sets, notes }) {
+  const { entry } = await postJson('/api/workout-log', { exerciseName, date, weight, reps, sets, notes });
+  return entry;
+}
+
+export async function updateWorkoutEntry({ id, date, weight, reps, sets, notes }) {
+  const { entry } = await patchJson('/api/workout-log', { id, date, weight, reps, sets, notes });
+  return entry;
+}
+
+export async function deleteWorkoutEntry(id) {
+  return deleteJson(`/api/workout-log?id=${encodeURIComponent(id)}`);
+}
+
+export async function getFoods({ signal } = {}) {
+  const { foods } = await getJson('/api/foods', { signal });
+  return foods;
+}
+
+export async function setFoodDefaults(id, { calories, protein, carbs, fat }) {
+  const { food } = await patchJson('/api/foods', { id, calories, protein, carbs, fat });
+  return food;
+}
+
+export async function createFood({ name, calories, protein, carbs, fat }) {
+  const { food } = await postJson('/api/foods', { name, calories, protein, carbs, fat });
+  return food;
+}
+
+export async function getFoodLog({ date, signal } = {}) {
+  const query = date ? `?date=${encodeURIComponent(date)}` : '';
+  const { entries } = await getJson(`/api/food-log${query}`, { signal });
+  return entries;
+}
+
+export async function createFoodEntry({ foodName, date, meal, calories, protein, carbs, fat }) {
+  const { entry } = await postJson('/api/food-log', { foodName, date, meal, calories, protein, carbs, fat });
+  return entry;
+}
+
+export async function updateFoodEntry({ id, date, meal, calories, protein, carbs, fat }) {
+  const { entry } = await patchJson('/api/food-log', { id, date, meal, calories, protein, carbs, fat });
+  return entry;
+}
+
+export async function deleteFoodEntry(id) {
+  return deleteJson(`/api/food-log?id=${encodeURIComponent(id)}`);
+}

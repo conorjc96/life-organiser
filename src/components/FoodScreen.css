@@ -1,0 +1,288 @@
+.food-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.food-date-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.food-date-arrow {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  color: var(--ink-soft);
+  background-color: #f4f4f2;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.food-date-input {
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink);
+  background-color: #f4f4f2;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 7px 10px;
+}
+
+/* ---------- Totals + protein goal ---------- */
+
+.food-totals-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(24, 24, 27, 0.04);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 10px 24px -18px rgba(24, 24, 27, 0.2);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.food-totals-row {
+  display: flex;
+  justify-content: space-around;
+}
+
+.food-total-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.food-total-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.food-total-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.food-protein-goal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.food-protein-goal-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.food-protein-track {
+  height: 8px;
+  border-radius: 999px;
+  background-color: #f0f0ee;
+  overflow: hidden;
+}
+
+.food-protein-fill {
+  height: 100%;
+  background-color: var(--accent);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* ---------- Add-a-new-food management form ---------- */
+
+.food-manage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.food-manage-toggle {
+  align-self: flex-start;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.food-new-form {
+  background-color: #ffffff;
+  border-radius: 14px;
+  border: 1px solid rgba(24, 24, 27, 0.04);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 10px 24px -18px rgba(24, 24, 27, 0.2);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.food-name-input {
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background-color: #f7f7f6;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+
+.food-name-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: #ffffff;
+}
+
+.food-new-row {
+  display: flex;
+  gap: 6px;
+}
+
+.food-number-input {
+  flex: 1;
+  min-width: 0;
+  width: 0;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink);
+  background-color: #f7f7f6;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 6px;
+  text-align: center;
+}
+
+.food-number-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: #ffffff;
+}
+
+/* ---------- Meal sections ---------- */
+
+.food-meal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.food-meal-title {
+  margin: 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.food-entry-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.food-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(24, 24, 27, 0.04);
+  padding: 10px 12px;
+}
+
+.food-entry-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-entry-stats {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.food-delete-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 16px;
+  color: var(--ink-faint);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* ---------- Add row ---------- */
+
+.food-add-row {
+  display: flex;
+  gap: 6px;
+}
+
+.food-select {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background-color: #f7f7f6;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+
+.food-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: #ffffff;
+}
+
+.food-preview {
+  margin: 2px 2px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.food-add-button {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: var(--accent);
+  border: none;
+  border-radius: 999px;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+
+.food-add-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
