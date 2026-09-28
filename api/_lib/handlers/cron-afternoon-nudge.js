@@ -1,7 +1,7 @@
-const { sendJson } = require('./_lib/notion');
-const { requireCronAuth } = require('./_lib/cronAuth');
-const { sendToStoredSubscription } = require('./_lib/push');
-const { getIncompleteTodayTaskNames, getIncompleteHabitNames } = require('./_lib/digest');
+const { sendJson } = require('../notion');
+const { requireCronAuth } = require('../cronAuth');
+const { sendToStoredSubscription } = require('../push');
+const { getIncompleteTodayTaskNames, getIncompleteHabitNames } = require('../digest');
 
 const MAX_NAMES = 4;
 

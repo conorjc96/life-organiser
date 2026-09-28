@@ -1,5 +1,5 @@
-const { notion, sendJson } = require('./_lib/notion');
-const { getExercises, invalidateExercisesCache, normalizeExercise } = require('./_lib/exercises');
+const { notion, sendJson } = require('../notion');
+const { getExercises, invalidateExercisesCache, normalizeExercise } = require('../exercises');
 
 const VALID_CATEGORY = ['Push', 'Pull', 'Legs', 'Core', 'Cardio', 'Other'];
 

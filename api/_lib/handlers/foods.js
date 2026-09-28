@@ -1,5 +1,5 @@
-const { notion, DATA_SOURCES, sendJson } = require('./_lib/notion');
-const { getFoods, invalidateFoodsCache, normalizeFood } = require('./_lib/foods');
+const { notion, DATA_SOURCES, sendJson } = require('../notion');
+const { getFoods, invalidateFoodsCache, normalizeFood } = require('../foods');
 
 async function handleGet(req, res) {
   const foods = await getFoods();

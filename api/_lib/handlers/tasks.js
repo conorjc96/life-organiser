@@ -1,6 +1,6 @@
-const { notion, DATA_SOURCES, queryAll, sendJson } = require('./_lib/notion');
-const { getProjectsMap } = require('./_lib/projects');
-const { getTitle, getSelect, getDate, getRelationIds } = require('./_lib/notion-utils');
+const { notion, DATA_SOURCES, queryAll, sendJson } = require('../notion');
+const { getProjectsMap } = require('../projects');
+const { getTitle, getSelect, getDate, getRelationIds } = require('../notion-utils');
 
 const VALID_WHEN = ['Today', 'This Week', 'Backlog'];
 const VALID_STATUS = ['To Do', 'In Progress', 'Done', 'Cancelled'];

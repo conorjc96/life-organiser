@@ -1,7 +1,10 @@
 // Local stand-in for Vercel's serverless runtime during `npm start`.
-// Routes /api/<name> to api/<name>.js the same way Vercel does in production,
-// so CRA's dev server (via the "proxy" field in package.json) can reach it.
-// Run with: node --env-file=.env.local scripts/dev-api-server.js
+// Routes /api/<name> to api/_lib/handlers/<name>.js — the same module
+// api/[...slug].js dispatches to in production (handlers were moved out of
+// top-level api/*.js and behind that one catch-all route so each one
+// doesn't count as its own Vercel Serverless Function; see the comment atop
+// api/[...slug].js for why). Run with:
+// node --env-file=.env.local scripts/dev-api-server.js
 const http = require('http');
 const { URL } = require('url');
 const path = require('path');
@@ -9,6 +12,7 @@ const fs = require('fs');
 
 const PORT = process.env.API_PORT || 3101;
 const apiDir = path.join(__dirname, '..', 'api');
+const handlersDir = path.join(apiDir, '_lib', 'handlers');
 
 function augmentResponse(res) {
   res.status = function (code) {
@@ -65,7 +69,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   const name = url.pathname.replace('/api/', '').split('/')[0];
-  const filePath = path.join(apiDir, `${name}.js`);
+  const filePath = path.join(handlersDir, `${name}.js`);
   if (!fs.existsSync(filePath)) {
     res.status(404).send(JSON.stringify({ error: `No handler for "${name}"` }));
     return;

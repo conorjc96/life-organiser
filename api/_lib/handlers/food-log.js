@@ -1,6 +1,6 @@
-const { notion, DATA_SOURCES, queryAll, sendJson } = require('./_lib/notion');
-const { getFoods, findOrCreateFood } = require('./_lib/foods');
-const { getTitle, getDate, getSelect, getRelationIds } = require('./_lib/notion-utils');
+const { notion, DATA_SOURCES, queryAll, sendJson } = require('../notion');
+const { getFoods, findOrCreateFood } = require('../foods');
+const { getTitle, getDate, getSelect, getRelationIds } = require('../notion-utils');
 
 const VALID_MEAL = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 

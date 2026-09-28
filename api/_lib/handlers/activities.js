@@ -1,6 +1,6 @@
-const { notion, DATA_SOURCES, queryAll, sendJson } = require('./_lib/notion');
-const { getAreasMap } = require('./_lib/areas');
-const { getTitle, getSelect, getDate, getRelationIds } = require('./_lib/notion-utils');
+const { notion, DATA_SOURCES, queryAll, sendJson } = require('../notion');
+const { getAreasMap } = require('../areas');
+const { getTitle, getSelect, getDate, getRelationIds } = require('../notion-utils');
 
 function normalizeActivity(page, areasMap) {
   const props = page.properties;

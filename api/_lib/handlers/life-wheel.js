@@ -1,6 +1,6 @@
-const { notion, DATA_SOURCES, queryAll, sendJson } = require('./_lib/notion');
-const { getAreasMap } = require('./_lib/areas');
-const { getDate, getRelationIds } = require('./_lib/notion-utils');
+const { notion, DATA_SOURCES, queryAll, sendJson } = require('../notion');
+const { getAreasMap } = require('../areas');
+const { getDate, getRelationIds } = require('../notion-utils');
 
 function normalizeRating(page, areasMap) {
   const props = page.properties;

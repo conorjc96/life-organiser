@@ -1,6 +1,6 @@
-const { notion, DATA_SOURCES, queryAll, sendJson } = require('./_lib/notion');
-const { getAreasMap } = require('./_lib/areas');
-const { getTitle, getSelect, getRelationIds } = require('./_lib/notion-utils');
+const { notion, DATA_SOURCES, queryAll, sendJson } = require('../notion');
+const { getAreasMap } = require('../areas');
+const { getTitle, getSelect, getRelationIds } = require('../notion-utils');
 
 // Start/End are stored and read as naive local wall-clock strings
 // ("2026-09-21T09:00:00", no timezone suffix) — Notion echoes them back

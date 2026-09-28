@@ -1,5 +1,5 @@
-const { sendJson } = require('./_lib/notion');
-const { getAreas } = require('./_lib/areas');
+const { sendJson } = require('../notion');
+const { getAreas } = require('../areas');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {

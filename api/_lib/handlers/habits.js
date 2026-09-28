@@ -1,5 +1,5 @@
-const { notion, DATA_SOURCES, queryAll, sendJson } = require('./_lib/notion');
-const { getTitle, getSelect, getCheckbox } = require('./_lib/notion-utils');
+const { notion, DATA_SOURCES, queryAll, sendJson } = require('../notion');
+const { getTitle, getSelect, getCheckbox } = require('../notion-utils');
 
 // This database is a weekly grid, not a daily log: one row per habit, with
 // a standing checkbox per weekday (Mon-Sun) that gets manually re-checked

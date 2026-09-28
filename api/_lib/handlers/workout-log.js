@@ -1,6 +1,6 @@
-const { notion, DATA_SOURCES, queryAll, sendJson } = require('./_lib/notion');
-const { getExercises, findOrCreateExercise } = require('./_lib/exercises');
-const { getTitle, getDate, getRichText, getRelationIds } = require('./_lib/notion-utils');
+const { notion, DATA_SOURCES, queryAll, sendJson } = require('../notion');
+const { getExercises, findOrCreateExercise } = require('../exercises');
+const { getTitle, getDate, getRichText, getRelationIds } = require('../notion-utils');
 
 function normalizeEntry(page, exercisesMap) {
   const props = page.properties;

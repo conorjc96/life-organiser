@@ -1,6 +1,6 @@
-const { notion, sendJson } = require('./_lib/notion');
-const { getProjects, normalizeProject, invalidateProjectsCache } = require('./_lib/projects');
-const { getAreasMap } = require('./_lib/areas');
+const { notion, sendJson } = require('../notion');
+const { getProjects, normalizeProject, invalidateProjectsCache } = require('../projects');
+const { getAreasMap } = require('../areas');
 
 async function handleGet(req, res) {
   const { areaId } = req.query;

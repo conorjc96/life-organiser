@@ -1,11 +1,11 @@
-const { sendJson } = require('./_lib/notion');
-const { requireCronAuth } = require('./_lib/cronAuth');
-const { sendToStoredSubscription } = require('./_lib/push');
+const { sendJson } = require('../notion');
+const { requireCronAuth } = require('../cronAuth');
+const { sendToStoredSubscription } = require('../push');
 const {
   getTodayScheduleCount,
   getIncompleteTodayTaskNames,
   getIncompleteHabitNames,
-} = require('./_lib/digest');
+} = require('../digest');
 
 module.exports = async function handler(req, res) {
   if (!requireCronAuth(req, res)) return;

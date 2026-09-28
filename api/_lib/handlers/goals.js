@@ -1,12 +1,12 @@
-const { notion, DATA_SOURCES, queryAll, sendJson } = require('./_lib/notion');
-const { getAreasMap } = require('./_lib/areas');
+const { notion, DATA_SOURCES, queryAll, sendJson } = require('../notion');
+const { getAreasMap } = require('../areas');
 const {
   getTitle,
   getRichText,
   getSelect,
   getDate,
   getRelationIds,
-} = require('./_lib/notion-utils');
+} = require('../notion-utils');
 
 const VALID_TIMEFRAMES = ['This Week', 'This Month', 'This Quarter', 'This Year', 'Long Term'];
 

@@ -1,5 +1,5 @@
-const { sendJson } = require('./_lib/notion');
-const { saveSubscription, clearSubscription } = require('./_lib/push');
+const { sendJson } = require('../notion');
+const { saveSubscription, clearSubscription } = require('../push');
 
 async function handlePost(req, res) {
   const subscription = req.body;

@@ -1,6 +1,6 @@
-const { notion, DATA_SOURCES, queryAll, sendJson } = require('./_lib/notion');
-const { getProjectsMap } = require('./_lib/projects');
-const { getTitle, getSelect, getUrl, getCheckbox, getRelationIds } = require('./_lib/notion-utils');
+const { notion, DATA_SOURCES, queryAll, sendJson } = require('../notion');
+const { getProjectsMap } = require('../projects');
+const { getTitle, getSelect, getUrl, getCheckbox, getRelationIds } = require('../notion-utils');
 
 const VALID_SONG_PART = [
   'Verse',
