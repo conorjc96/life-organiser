@@ -1,11 +1,27 @@
 const webpush = require('web-push');
 const { notion, DATA_SOURCES, queryAll } = require('./notion');
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT,
-  process.env.REACT_APP_VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+// Deliberately guarded, not called unconditionally at module load: this
+// file is required (transitively) by api/[...slug].js for every route, not
+// just the push-related ones — a throw here at import time would crash
+// every API route, not just push. If the VAPID env vars are missing or
+// malformed, push-related calls below fail on their own with a clear
+// error instead of taking the whole API down.
+let vapidConfigured = false;
+try {
+  if (process.env.VAPID_SUBJECT && process.env.REACT_APP_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+      process.env.VAPID_SUBJECT,
+      process.env.REACT_APP_VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    );
+    vapidConfigured = true;
+  } else {
+    console.error('VAPID env vars missing — push notifications are disabled until they are set.');
+  }
+} catch (err) {
+  console.error('Failed to configure VAPID details — push notifications are disabled.', err);
+}
 
 // Single-user app — at most one subscription row ever exists. Upsert by
 // finding (and archiving) any existing row before creating the new one,
@@ -45,6 +61,7 @@ async function clearSubscription() {
 // service means the browser dropped the subscription (e.g. the PWA was
 // uninstalled) — clean it up rather than retrying it forever.
 async function sendToStoredSubscription(payload) {
+  if (!vapidConfigured) return { sent: false, reason: 'vapid-not-configured' };
   const subscription = await getSubscription();
   if (!subscription) return { sent: false, reason: 'no-subscription' };
 
