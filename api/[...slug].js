@@ -18,6 +18,18 @@
 // existed, each route was its own isolated Vercel Function, so one
 // module's failure never took down unrelated ones — lazy-requiring here
 // restores that isolation despite everything now living in one function.
+//
+// The route name comes from req.url, NOT req.query.slug — on this
+// project's actual Vercel deployment, req.query.slug came back undefined
+// on every request (confirmed live: every route 404'd with
+// 'No handler for "undefined"'), even though Vercel's docs describe
+// [...slug].js populating req.query.slug automatically. Whatever the
+// cause, parsing the path segment straight off req.url sidesteps that
+// platform behavior entirely and is guaranteed correct regardless — it's
+// the same technique scripts/dev-api-server.js already used locally.
+// Ordinary query-string params (?when=Today etc.) are unaffected and keep
+// arriving in req.query the normal way; only the dynamic segment itself
+// wasn't coming through as expected.
 const { sendJson } = require('./_lib/notion');
 
 const routeFiles = {
@@ -40,7 +52,8 @@ const routeFiles = {
 };
 
 module.exports = async function handler(req, res) {
-  const slug = Array.isArray(req.query.slug) ? req.query.slug[0] : req.query.slug;
+  const pathname = (req.url || '').split('?')[0];
+  const slug = pathname.replace(/^\/api\//, '').split('/')[0];
   const routeFile = routeFiles[slug];
   if (!routeFile) {
     return sendJson(res, 404, { error: `No handler for "${slug}"` });
