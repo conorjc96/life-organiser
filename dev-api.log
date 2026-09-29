@@ -1,0 +1,5 @@
+
+> life-organiser@0.1.0 dev:api
+> node --env-file=.env.local scripts/dev-api-server.js
+
+Local API dev server on http://localhost:3101
